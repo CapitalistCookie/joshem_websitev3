@@ -19,6 +19,9 @@ app.use(bodyParser.json({ limit: '100mb' }));
 app.use(bodyParser.urlencoded({ limit: '100mb', extended: true }));
 
 const INITIAL_DATA = {
+  auth: {
+    password: 'admin123'
+  },
   menu: [
     {
       id: '1',
@@ -87,7 +90,10 @@ const readDb = () => {
 // --- ROUTES ---
 
 app.get('/api/data', (req, res) => {
-    res.json(readDb());
+    const data = readDb();
+    // Security: Exclude auth object from public data
+    const { auth, ...publicData } = data;
+    res.json(publicData);
 });
 
 app.post('/api/menu', (req, res) => {
@@ -107,6 +113,28 @@ app.post('/api/content', (req, res) => {
 app.post('/api/testimonials', (req, res) => {
     const db = readDb();
     db.testimonials = req.body;
+    writeDb(db);
+    res.json({ success: true });
+});
+
+// --- AUTH ROUTES ---
+
+app.post('/api/auth/verify', (req, res) => {
+    const db = readDb();
+    // Default to 'admin123' if auth object is missing
+    const currentPassword = db.auth ? db.auth.password : 'admin123';
+    
+    if (req.body.password === currentPassword) {
+        res.json({ success: true });
+    } else {
+        res.status(401).json({ success: false, message: 'Invalid credentials' });
+    }
+});
+
+app.post('/api/auth/update', (req, res) => {
+    const db = readDb();
+    if (!db.auth) db.auth = {};
+    db.auth.password = req.body.password;
     writeDb(db);
     res.json({ success: true });
 });

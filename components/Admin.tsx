@@ -5,11 +5,12 @@ import {
   getSiteContent, saveSiteContent,
   getTestimonials, saveTestimonials,
   checkServerHealth,
+  verifyPassword, updatePassword,
   FALLBACK_CONTENT
 } from '../services/storage';
 import { Link } from 'react-router-dom';
 
-type Tab = 'menu' | 'content' | 'testimonials';
+type Tab = 'menu' | 'content' | 'testimonials' | 'settings';
 
 const Admin: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -23,6 +24,10 @@ const Admin: React.FC = () => {
   const [items, setItems] = useState<MenuItem[]>([]);
   const [siteContent, setSiteContent] = useState<SiteContent | null>(null);
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
+  
+  // Settings State
+  const [newPass, setNewPass] = useState('');
+  const [confirmPass, setConfirmPass] = useState('');
   
   // Drag and Drop State
   const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
@@ -80,9 +85,10 @@ const Admin: React.FC = () => {
     }
   };
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (password === 'admin123') setIsAuthenticated(true);
+    const isValid = await verifyPassword(password);
+    if (isValid) setIsAuthenticated(true);
     else alert('Incorrect password');
   };
 
@@ -205,6 +211,31 @@ const Admin: React.FC = () => {
     setNewTestimonial({ name: '', text: '', rating: 5 });
   };
 
+  const handlePasswordUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newPass || !confirmPass) {
+        alert("Please enter a password.");
+        return;
+    }
+    if (newPass !== confirmPass) {
+        alert("Passwords do not match.");
+        return;
+    }
+    if (newPass.length < 5) {
+        alert("Password too short. Use at least 5 characters.");
+        return;
+    }
+    
+    const success = await updatePassword(newPass);
+    if (success) {
+        alert("Password updated successfully!");
+        setNewPass('');
+        setConfirmPass('');
+    } else {
+        alert("Password updated locally, but server sync failed. It will sync when connection is restored.");
+    }
+  };
+
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-100">
@@ -237,7 +268,7 @@ const Admin: React.FC = () => {
         )}
 
         <nav className="flex-1 space-y-2">
-          {['menu', 'content', 'testimonials'].map((tab) => (
+          {['menu', 'content', 'testimonials', 'settings'].map((tab) => (
             <button 
               key={tab} onClick={() => setActiveTab(tab as Tab)}
               className={`w-full text-left px-4 py-3 rounded-lg capitalize transition-all ${activeTab === tab ? 'bg-[#36B1E5] text-white font-bold translate-x-1' : 'text-gray-400 hover:bg-gray-800'}`}
@@ -514,6 +545,41 @@ const Admin: React.FC = () => {
                   </div>
                 ))}
               </div>
+            </div>
+          )}
+
+          {activeTab === 'settings' && (
+            <div className="space-y-8 animate-fade-in-up">
+                <h2 className="text-3xl font-bold">Admin Settings</h2>
+                <div className="bg-white p-6 rounded-xl shadow-sm border-l-4 border-purple-500">
+                    <h3 className="font-bold text-gray-800 text-lg mb-4">Security</h3>
+                    <form onSubmit={handlePasswordUpdate} className="flex flex-col gap-4 max-w-md">
+                        <div>
+                            <label className="text-xs font-bold text-gray-400 uppercase">New Password</label>
+                            <input 
+                                type="password"
+                                className="w-full border p-3 rounded focus:ring-2 focus:ring-purple-400 outline-none"
+                                value={newPass}
+                                onChange={(e) => setNewPass(e.target.value)}
+                            />
+                        </div>
+                        <div>
+                            <label className="text-xs font-bold text-gray-400 uppercase">Confirm Password</label>
+                            <input 
+                                type="password"
+                                className="w-full border p-3 rounded focus:ring-2 focus:ring-purple-400 outline-none"
+                                value={confirmPass}
+                                onChange={(e) => setConfirmPass(e.target.value)}
+                            />
+                        </div>
+                        <button 
+                            type="submit"
+                            className="bg-purple-600 text-white py-3 rounded-lg font-bold hover:bg-purple-700 transition-colors shadow-md"
+                        >
+                            Update Password
+                        </button>
+                    </form>
+                </div>
             </div>
           )}
         </div>

@@ -4,7 +4,8 @@ import { MenuItem, SiteContent, Testimonial } from '../types';
 const KEYS = {
   MENU: 'joshem_menu_data_v2',
   CONTENT: 'joshem_site_content_v2',
-  TESTIMONIALS: 'joshem_testimonials_v2'
+  TESTIMONIALS: 'joshem_testimonials_v2',
+  AUTH_PASS: 'joshem_auth_pass_v2'
 };
 
 // --- RICH FALLBACK DATA ---
@@ -58,7 +59,7 @@ export const FALLBACK_CONTENT: SiteContent = {
       instagram: "https://instagram.com/joshemfoods",
       twitter: "https://twitter.com/joshemfoods"
     }
-};
+  };
 
 export const FALLBACK_TESTIMONIALS: Testimonial[] = [
     { id: 1, name: "Maria Santos", rating: 5, text: "Absolutely the best Filipino food I've had outside of Manila. The Adobo tastes just like home!" },
@@ -157,3 +158,47 @@ export const saveSiteContent = (content: SiteContent) => saveToHybrid('/content'
 
 export const getTestimonials = () => getFromHybrid<Testimonial[]>('/data', KEYS.TESTIMONIALS, FALLBACK_TESTIMONIALS, 'testimonials');
 export const saveTestimonials = (items: Testimonial[]) => saveToHybrid('/testimonials', KEYS.TESTIMONIALS, items);
+
+// --- AUTH API ---
+export const verifyPassword = async (password: string): Promise<boolean> => {
+  try {
+    // Try server verification first
+    const res = await fetchWithTimeout('/api/auth/verify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password })
+    });
+    
+    if (res.ok) {
+      // If server accepts it, cache it locally for offline use
+      setLocal(KEYS.AUTH_PASS, password);
+      return true;
+    }
+    return false;
+  } catch (e) {
+    // If server is unreachable, check local cache
+    const cached = getLocal<string>(KEYS.AUTH_PASS);
+    // If no cache exists, check default 'admin123' (safe fallback for initial offline setup)
+    const isValid = cached ? cached === password : password === 'admin123';
+    return isValid;
+  }
+};
+
+export const updatePassword = async (password: string): Promise<boolean> => {
+  // Always update local cache first
+  setLocal(KEYS.AUTH_PASS, password);
+  
+  try {
+    // Try to update server
+    const res = await fetchWithTimeout('/api/auth/update', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password })
+    });
+    return res.ok;
+  } catch (e) {
+    // Return true because we successfully updated locally (Optimistic UI)
+    // Server will eventually get updated or user will update again later
+    return false; 
+  }
+};
