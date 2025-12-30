@@ -38,6 +38,7 @@ export const FALLBACK_MENU: MenuItem[] = [
 export const FALLBACK_CONTENT: SiteContent = {
   about: {
       title: "Our Heritage",
+      subtitle: "Authentic Filipino flavors served with a smile.",
       storyTitle: "From Our Kitchen to Yours",
       storyText: "JoShem Foods started as a small family gathering where recipes passed down from our Lola (Grandmother) were the highlight of every weekend. Today, we bring those same authentic flavors to you.",
       storyImage: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&q=80&w=800"
@@ -45,12 +46,26 @@ export const FALLBACK_CONTENT: SiteContent = {
     contact: {
       address: "123 Manila Avenue, Food District, CA 90000",
       phone: "(555) 123-4567",
-      email: "orders@joshemfoods.com"
+      email: "orders@joshemfoods.com",
+      hours: {
+        monFri: "10:00 AM - 9:00 PM",
+        sat: "11:00 AM - 10:00 PM",
+        sun: "Closed"
+      }
+    },
+    socials: {
+      facebook: "https://facebook.com/joshemfoods",
+      instagram: "https://instagram.com/joshemfoods",
+      twitter: "https://twitter.com/joshemfoods"
     }
 };
 
 export const FALLBACK_TESTIMONIALS: Testimonial[] = [
-    { id: 1, name: "Maria Santos", rating: 5, text: "Absolutely the best Filipino food I've had outside of Manila. The Adobo tastes just like home!" }
+    { id: 1, name: "Maria Santos", rating: 5, text: "Absolutely the best Filipino food I've had outside of Manila. The Adobo tastes just like home!" },
+    { id: 2, name: "Ricardo Batungbakal", rating: 5, text: "The Lumpia Shanghai is incredibly crispy! I ordered 50 pieces for my son's birthday and they were gone in minutes. Highly recommend JoShem for any party catering." },
+    { id: 3, name: "Jocelyn Dimagiba", rating: 4, text: "The Kare-Kare sauce is thick and savory, just the way it should be. The bagoong on the side was the perfect compliment. A bit of a wait for delivery, but worth it." },
+    { id: 4, name: "Renato de Guzman", rating: 5, text: "I've tried many Filipino restaurants in the city, but JoShem captures the 'Puso' of our cooking. Their Sinigang is sour enough to make you blink—exactly how I like it!" },
+    { id: 5, name: "Maria Elena Soriano", rating: 5, text: "We hired JoShem for our company's cultural day. The presentation was beautiful and the Lechon Kawali was still crunchy when it arrived. Five stars for service!" }
 ];
 
 // Helper to get from LocalStorage

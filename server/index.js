@@ -32,18 +32,29 @@ const INITIAL_DATA = {
   content: {
     about: {
       title: "Our Heritage",
+      subtitle: "Authentic Filipino flavors served with a smile.",
       storyTitle: "From Our Kitchen to Yours",
-      storyText: "JoShem Foods brings the authentic flavors of the Philippines to your plate. Our philosophy is simple: cook with 'Puso' (Heart).",
+      storyText: "JoShem Foods brings the comforting, home-style flavors of the Philippines to your table. Everything we make is cooked with puso(heart)using time-honored recipes, quality ingredients, and the kind of care you can taste in every bite. Whether you are feeding a small gathering or a full celebration, we are here to serve Filipino food that feels warm, familiar, and unforgettable.",
       storyImage: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&q=80&w=800"
     },
     contact: {
       address: "123 Manila Avenue, Food District, CA 90000",
       phone: "(555) 123-4567",
-      email: "orders@joshemfoods.com"
+      email: "orders@joshemfoods.com",
+      hours: {
+        monFri: "10:00 AM - 9:00 PM",
+        sat: "11:00 AM - 10:00 PM",
+        sun: "Closed"
+      }
+    },
+    socials: {
+      facebook: "https://facebook.com/joshemfoods",
+      instagram: "https://instagram.com/joshemfoods",
+      twitter: "https://twitter.com/joshemfoods"
     }
   },
   testimonials: [
-      { id: 1, name: "Maria Santos", rating: 5, text: "Absolutely the best Filipino food I've had outside of Manila." }
+      { id: 1, name: "Maria Santos", rating: 5, text: "Absolutely the best Filipino food I've had outside of Manila. The Adobo tastes just like home!" }
   ]
 };
 

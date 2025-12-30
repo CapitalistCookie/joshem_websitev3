@@ -42,7 +42,8 @@ const About: React.FC<SectionProps> = ({ id }) => {
           {/* Text Side */}
           <div className="w-full md:w-1/2 text-center md:text-left animate-fade-in-right" style={{ animationDelay: '200ms' }}>
             <h3 className="text-[#36B1E5] font-bold text-xl mb-2 uppercase tracking-wider">{content.title}</h3>
-            <h2 className="text-4xl font-bold text-gray-900 mb-6">{content.storyTitle}</h2>
+            <h2 className="text-4xl font-bold text-gray-900 mb-2">{content.storyTitle}</h2>
+            <p className="text-[#36B1E5] font-medium mb-6 italic">{content.subtitle}</p>
             <p className="text-gray-600 mb-6 leading-relaxed whitespace-pre-line">
               {content.storyText}
             </p>
