@@ -32,7 +32,6 @@ const Admin: React.FC = () => {
   });
 
   useEffect(() => {
-    // Check server status on mount
     const checkServer = async () => {
       const live = await checkServerHealth();
       setIsServerLive(live);
@@ -75,7 +74,6 @@ const Admin: React.FC = () => {
     }
   };
 
-  // --- HANDLERS ---
   const handleAddItem = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newItem.name || !newItem.price) return;
@@ -85,7 +83,7 @@ const Admin: React.FC = () => {
       description: newItem.description || '',
       price: Number(newItem.price),
       category: (newItem.category as any) || 'Main',
-      image: newItem.image || 'https://placehold.co/600x400?text=Food'
+      image: newItem.image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=800'
     };
     const updated = [...items, itemToAdd];
     setItems(updated);
@@ -144,12 +142,12 @@ const Admin: React.FC = () => {
       <aside className="bg-gray-900 text-white w-full md:w-64 p-6 flex flex-col">
         <div className="flex items-center justify-between mb-8">
             <h1 className="text-2xl font-script text-[#36B1E5]">Admin Panel</h1>
-            <div className={`w-3 h-3 rounded-full ${isServerLive === null ? 'bg-gray-500' : isServerLive ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]' : 'bg-red-500'}`} title={isServerLive ? "Server Online" : "Server Offline - Using Local Storage"}></div>
+            <div className={`w-3 h-3 rounded-full ${isServerLive === null ? 'bg-gray-500' : isServerLive ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]' : 'bg-red-500'}`} title={isServerLive ? "Server Online" : "Server Offline"}></div>
         </div>
         
         {!isServerLive && isServerLive !== null && (
             <div className="mb-6 p-3 bg-red-900/30 border border-red-800 rounded-lg text-xs text-red-200">
-                <strong>Warning:</strong> Server unreachable. Changes are being saved to your browser's local storage only.
+                <strong>Warning:</strong> Server unreachable. Syncing to local storage.
             </div>
         )}
 
@@ -168,24 +166,11 @@ const Admin: React.FC = () => {
 
       <main className="flex-1 p-8 overflow-y-auto">
         <div className="max-w-4xl mx-auto">
-          
-          {/* Notification Toasts */}
+          {/* Status Indicator */}
           <div className="fixed top-6 right-6 flex flex-col gap-2 z-50">
-            {isSaving && (
-                <div className="bg-yellow-500 text-white px-6 py-2 rounded-full shadow-lg flex items-center gap-2 animate-bounce">
-                <span className="animate-spin text-lg">↻</span> Saving...
-                </div>
-            )}
-            {!isSaving && !isSynced && (
-                 <div className="bg-orange-500 text-white px-6 py-2 rounded-full shadow-lg flex items-center gap-2 animate-fade-in-up">
-                    <span>⚠️ Saved Locally (Offline)</span>
-                 </div>
-            )}
-             {!isSaving && isSynced && isServerLive && (
-                 <div className="bg-green-600 text-white px-6 py-2 rounded-full shadow-lg flex items-center gap-2 animate-fade-in-up">
-                    <span>✅ Synced to Cloud</span>
-                 </div>
-            )}
+            {isSaving && <div className="bg-yellow-500 text-white px-6 py-2 rounded-full shadow-lg flex items-center gap-2 animate-bounce">↻ Saving...</div>}
+            {!isSaving && !isSynced && <div className="bg-orange-500 text-white px-6 py-2 rounded-full shadow-lg animate-fade-in-up">⚠️ Saved Locally</div>}
+            {!isSaving && isSynced && isServerLive && <div className="bg-green-600 text-white px-6 py-2 rounded-full shadow-lg animate-fade-in-up">✅ Cloud Synced</div>}
           </div>
 
           {activeTab === 'menu' && (
@@ -195,36 +180,51 @@ const Admin: React.FC = () => {
                   <p className="text-sm text-gray-500">{items.length} items total</p>
               </div>
               <form onSubmit={handleAddItem} className="bg-white p-6 rounded-xl shadow-sm space-y-4 border-l-4 border-blue-400">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="flex flex-col gap-1">
                     <label className="text-xs font-bold text-gray-400 uppercase">Item Name</label>
-                    <input placeholder="e.g. Pork Sisig" className="border p-2 rounded focus:ring-2 focus:ring-blue-400 outline-none" value={newItem.name} onChange={e => setNewItem({...newItem, name: e.target.value})} required />
+                    <input className="border p-2 rounded focus:ring-2 focus:ring-blue-400 outline-none" value={newItem.name} onChange={e => setNewItem({...newItem, name: e.target.value})} required />
                   </div>
                   <div className="flex flex-col gap-1">
                     <label className="text-xs font-bold text-gray-400 uppercase">Price ($)</label>
-                    <input type="number" step="0.01" placeholder="12.99" className="border p-2 rounded focus:ring-2 focus:ring-blue-400 outline-none" value={newItem.price || ''} onChange={e => setNewItem({...newItem, price: parseFloat(e.target.value)})} required />
+                    <input type="number" step="0.01" className="border p-2 rounded focus:ring-2 focus:ring-blue-400 outline-none" value={newItem.price || ''} onChange={e => setNewItem({...newItem, price: parseFloat(e.target.value)})} required />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <label className="text-xs font-bold text-gray-400 uppercase">Category</label>
+                    <select 
+                      className="border p-2 rounded focus:ring-2 focus:ring-blue-400 outline-none bg-white" 
+                      value={newItem.category} 
+                      onChange={e => setNewItem({...newItem, category: e.target.value as any})}
+                    >
+                      <option value="Main">Main</option>
+                      <option value="Appetizer">Appetizer</option>
+                      <option value="Dessert">Dessert</option>
+                      <option value="Drinks">Drinks</option>
+                    </select>
                   </div>
                 </div>
                 <div className="flex flex-col gap-1">
-                    <label className="text-xs font-bold text-gray-400 uppercase">Description</label>
-                    <textarea placeholder="Tell your customers about this dish..." className="border p-2 w-full rounded focus:ring-2 focus:ring-blue-400 outline-none" rows={2} value={newItem.description} onChange={e => setNewItem({...newItem, description: e.target.value})} />
+                    <label className="text-xs font-bold text-gray-400 uppercase">Image URL</label>
+                    <input className="border p-2 rounded focus:ring-2 focus:ring-blue-400 outline-none" placeholder="https://image-link.com/photo.jpg" value={newItem.image} onChange={e => setNewItem({...newItem, image: e.target.value})} />
                 </div>
-                <button type="submit" className="w-full bg-[#36B1E5] text-white py-3 rounded-lg font-bold hover:bg-blue-600 transition-colors shadow-md">Add to Menu</button>
+                <div className="flex flex-col gap-1">
+                    <label className="text-xs font-bold text-gray-400 uppercase">Description</label>
+                    <textarea className="border p-2 w-full rounded focus:ring-2 focus:ring-blue-400 outline-none" rows={2} value={newItem.description} onChange={e => setNewItem({...newItem, description: e.target.value})} />
+                </div>
+                <button type="submit" className="w-full bg-[#36B1E5] text-white py-3 rounded-lg font-bold hover:bg-blue-600 shadow-md transition-colors">Add to Menu</button>
               </form>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {items.map(item => (
-                  <div key={item.id} className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center hover:shadow-md transition-shadow">
+                  <div key={item.id} className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center group">
                     <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center text-xl font-bold text-gray-400">
-                            {item.name.charAt(0)}
-                        </div>
+                        <img src={item.image} className="w-12 h-12 rounded object-cover" onError={(e) => (e.currentTarget.src = 'https://placehold.co/100x100?text=Food')} />
                         <div>
-                        <h4 className="font-bold text-gray-800">{item.name}</h4>
-                        <p className="text-sm text-blue-500 font-semibold">${item.price.toFixed(2)}</p>
+                          <h4 className="font-bold text-gray-800">{item.name}</h4>
+                          <p className="text-xs text-[#36B1E5] font-bold">{item.category} • ${item.price.toFixed(2)}</p>
                         </div>
                     </div>
-                    <button onClick={() => handleDeleteItem(item.id)} className="text-red-400 hover:text-red-600 p-2 rounded-full hover:bg-red-50 transition-colors">
+                    <button onClick={() => handleDeleteItem(item.id)} className="text-red-400 hover:text-red-600 p-2 opacity-0 group-hover:opacity-100 transition-opacity">
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                     </button>
                   </div>
@@ -235,55 +235,74 @@ const Admin: React.FC = () => {
 
           {activeTab === 'content' && siteContent && (
             <div className="space-y-8 animate-fade-in-up">
-               <h2 className="text-3xl font-bold">Edit Content</h2>
+               <h2 className="text-3xl font-bold">Site Content</h2>
                <form onSubmit={handleContentSave} className="space-y-6">
                 {/* About Section */}
                 <div className="bg-white p-6 rounded-xl shadow-sm space-y-4 border-l-4 border-gray-900">
-                    <h3 className="font-bold text-gray-400 uppercase text-xs tracking-widest mb-4">About Section</h3>
+                    <h3 className="font-bold text-gray-400 uppercase text-xs tracking-widest mb-4">About Story</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="flex flex-col gap-1">
+                          <label className="text-xs font-bold text-gray-400 uppercase">Section Tagline</label>
+                          <input className="border p-3 rounded focus:ring-2 focus:ring-blue-400 outline-none" value={siteContent.about.title} onChange={e => setSiteContent({...siteContent, about: {...siteContent.about, title: e.target.value}})} />
+                      </div>
+                      <div className="flex flex-col gap-1">
+                          <label className="text-xs font-bold text-gray-400 uppercase">Subtitle (Italicized)</label>
+                          <input className="border p-3 rounded focus:ring-2 focus:ring-blue-400 outline-none italic" value={siteContent.about.subtitle} onChange={e => setSiteContent({...siteContent, about: {...siteContent.about, subtitle: e.target.value}})} />
+                      </div>
+                    </div>
                     <div className="flex flex-col gap-1">
-                        <label className="text-xs font-bold text-gray-400 uppercase">Headline</label>
-                        <input className="w-full border p-3 rounded focus:ring-2 focus:ring-blue-400 outline-none font-bold text-lg" value={siteContent.about.storyTitle} onChange={e => setSiteContent({...siteContent, about: {...siteContent.about, storyTitle: e.target.value}})} />
+                        <label className="text-xs font-bold text-gray-400 uppercase">Main Heading</label>
+                        <input className="border p-3 rounded focus:ring-2 focus:ring-blue-400 outline-none font-bold" value={siteContent.about.storyTitle} onChange={e => setSiteContent({...siteContent, about: {...siteContent.about, storyTitle: e.target.value}})} />
                     </div>
                     <div className="flex flex-col gap-1">
                         <label className="text-xs font-bold text-gray-400 uppercase">Story Text</label>
-                        <textarea className="w-full border p-3 rounded focus:ring-2 focus:ring-blue-400 outline-none" rows={6} value={siteContent.about.storyText} onChange={e => setSiteContent({...siteContent, about: {...siteContent.about, storyText: e.target.value}})} />
+                        <textarea className="border p-3 rounded focus:ring-2 focus:ring-blue-400 outline-none" rows={5} value={siteContent.about.storyText} onChange={e => setSiteContent({...siteContent, about: {...siteContent.about, storyText: e.target.value}})} />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                        <label className="text-xs font-bold text-gray-400 uppercase">Story Image URL</label>
+                        <input className="border p-3 rounded focus:ring-2 focus:ring-blue-400 outline-none" value={siteContent.about.storyImage} onChange={e => setSiteContent({...siteContent, about: {...siteContent.about, storyImage: e.target.value}})} />
                     </div>
                 </div>
 
                 {/* Contact Section */}
                 <div className="bg-white p-6 rounded-xl shadow-sm space-y-4 border-l-4 border-[#36B1E5]">
-                    <h3 className="font-bold text-gray-400 uppercase text-xs tracking-widest mb-4">Contact Information</h3>
+                    <h3 className="font-bold text-gray-400 uppercase text-xs tracking-widest mb-4">Contact Info & Hours</h3>
                     <div className="flex flex-col gap-1">
-                        <label className="text-xs font-bold text-gray-400 uppercase">Address (Map Location)</label>
-                        <input 
-                            placeholder="e.g. 123 Manila Ave, City, ST 00000"
-                            className="w-full border p-3 rounded focus:ring-2 focus:ring-blue-400 outline-none" 
-                            value={siteContent.contact.address} 
-                            onChange={e => setSiteContent({...siteContent, contact: {...siteContent.contact, address: e.target.value}})} 
-                        />
-                        <p className="text-[10px] text-gray-400 italic mt-1">Changing this will automatically update the Google Map on your contact page.</p>
+                        <label className="text-xs font-bold text-gray-400 uppercase">Address</label>
+                        <input className="border p-3 rounded focus:ring-2 focus:ring-blue-400 outline-none" value={siteContent.contact.address} onChange={e => setSiteContent({...siteContent, contact: {...siteContent.contact, address: e.target.value}})} />
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="flex flex-col gap-1">
-                            <label className="text-xs font-bold text-gray-400 uppercase">Phone Number</label>
-                            <input 
-                                className="w-full border p-3 rounded focus:ring-2 focus:ring-blue-400 outline-none" 
-                                value={siteContent.contact.phone} 
-                                onChange={e => setSiteContent({...siteContent, contact: {...siteContent.contact, phone: e.target.value}})} 
-                            />
+                            <label className="text-xs font-bold text-gray-400 uppercase">Phone</label>
+                            <input className="border p-3 rounded focus:ring-2 focus:ring-blue-400 outline-none" value={siteContent.contact.phone} onChange={e => setSiteContent({...siteContent, contact: {...siteContent.contact, phone: e.target.value}})} />
                         </div>
                         <div className="flex flex-col gap-1">
-                            <label className="text-xs font-bold text-gray-400 uppercase">Email Address</label>
-                            <input 
-                                className="w-full border p-3 rounded focus:ring-2 focus:ring-blue-400 outline-none" 
-                                value={siteContent.contact.email} 
-                                onChange={e => setSiteContent({...siteContent, contact: {...siteContent.contact, email: e.target.value}})} 
-                            />
+                            <label className="text-xs font-bold text-gray-400 uppercase">Email</label>
+                            <input className="border p-3 rounded focus:ring-2 focus:ring-blue-400 outline-none" value={siteContent.contact.email} onChange={e => setSiteContent({...siteContent, contact: {...siteContent.contact, email: e.target.value}})} />
                         </div>
+                    </div>
+                    
+                    {/* Opening Hours */}
+                    <div className="pt-4 border-t border-gray-100">
+                      <label className="text-xs font-bold text-gray-400 uppercase block mb-2">Opening Hours</label>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="flex flex-col gap-1">
+                          <label className="text-[10px] text-gray-400">Mon - Fri</label>
+                          <input className="border p-2 text-sm rounded" value={siteContent.contact.hours.monFri} onChange={e => setSiteContent({...siteContent, contact: {...siteContent.contact, hours: {...siteContent.contact.hours, monFri: e.target.value}}})} />
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <label className="text-[10px] text-gray-400">Saturday</label>
+                          <input className="border p-2 text-sm rounded" value={siteContent.contact.hours.sat} onChange={e => setSiteContent({...siteContent, contact: {...siteContent.contact, hours: {...siteContent.contact.hours, sat: e.target.value}}})} />
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <label className="text-[10px] text-gray-400">Sunday</label>
+                          <input className="border p-2 text-sm rounded" value={siteContent.contact.hours.sun} onChange={e => setSiteContent({...siteContent, contact: {...siteContent.contact, hours: {...siteContent.contact.hours, sun: e.target.value}}})} />
+                        </div>
+                      </div>
                     </div>
                 </div>
 
-                <button type="submit" className="w-full bg-gray-900 text-white py-4 rounded-xl font-bold hover:bg-black transition-all shadow-lg">Save Site Changes</button>
+                <button type="submit" className="w-full bg-gray-900 text-white py-4 rounded-xl font-bold hover:bg-black transition-all shadow-lg">Save All Content</button>
               </form>
             </div>
           )}
@@ -294,32 +313,21 @@ const Admin: React.FC = () => {
               <form onSubmit={handleAddTestimonial} className="bg-white p-6 rounded-xl shadow-sm space-y-4 border-l-4 border-yellow-400">
                 <div className="flex flex-col gap-1">
                     <label className="text-xs font-bold text-gray-400 uppercase">Customer Name</label>
-                    <input placeholder="e.g. John Doe" className="w-full border p-2 rounded focus:ring-2 focus:ring-blue-400 outline-none" value={newTestimonial.name} onChange={e => setNewTestimonial({...newTestimonial, name: e.target.value})} />
+                    <input placeholder="e.g. John Doe" className="border p-2 rounded focus:ring-2 focus:ring-blue-400 outline-none" value={newTestimonial.name} onChange={e => setNewTestimonial({...newTestimonial, name: e.target.value})} />
                 </div>
                 <div className="flex flex-col gap-1">
-                    <label className="text-xs font-bold text-gray-400 uppercase">Review</label>
-                    <textarea placeholder="What did they say?" className="w-full border p-2 rounded focus:ring-2 focus:ring-blue-400 outline-none" value={newTestimonial.text} onChange={e => setNewTestimonial({...newTestimonial, text: e.target.value})} />
+                    <label className="text-xs font-bold text-gray-400 uppercase">Review Text</label>
+                    <textarea placeholder="Their experience..." className="border p-2 rounded focus:ring-2 focus:ring-blue-400 outline-none" value={newTestimonial.text} onChange={e => setNewTestimonial({...newTestimonial, text: e.target.value})} />
                 </div>
-                <button type="submit" className="w-full bg-[#36B1E5] text-white py-3 rounded-lg font-bold hover:bg-blue-600 transition-colors shadow-md">Post Review</button>
+                <button type="submit" className="w-full bg-[#36B1E5] text-white py-3 rounded-lg font-bold hover:bg-blue-600 shadow-md">Post Testimonial</button>
               </form>
               <div className="space-y-4">
                 {testimonials.map((t, i) => (
                   <div key={i} className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 relative group">
                     <div className="flex text-yellow-400 mb-2">{'★'.repeat(t.rating)}</div>
-                    <p className="italic text-gray-600 text-lg">"{t.text}"</p>
-                    <p className="text-sm font-bold mt-4 text-gray-800">— {t.name}</p>
-                    <button 
-                        onClick={() => {
-                            if(window.confirm('Delete review?')) {
-                                const updated = testimonials.filter((_, idx) => idx !== i);
-                                setTestimonials(updated);
-                                triggerSave(() => saveTestimonials(updated));
-                            }
-                        }}
-                        className="absolute top-4 right-4 text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                        Delete
-                    </button>
+                    <p className="italic text-gray-600">"{t.text}"</p>
+                    <p className="text-sm font-bold mt-2">— {t.name}</p>
+                    <button onClick={() => { if(window.confirm('Delete?')) { const up = testimonials.filter((_, idx) => idx !== i); setTestimonials(up); triggerSave(() => saveTestimonials(up)); }}} className="absolute top-4 right-4 text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">Delete</button>
                   </div>
                 ))}
               </div>

@@ -10,6 +10,7 @@ export interface MenuItem {
 export interface SiteContent {
   about: {
     title: string;
+    subtitle: string;
     storyTitle: string;
     storyText: string;
     storyImage: string;
@@ -18,6 +19,11 @@ export interface SiteContent {
     address: string;
     phone: string;
     email: string;
+    hours: {
+      monFri: string;
+      sat: string;
+      sun: string;
+    };
   };
 }
 
