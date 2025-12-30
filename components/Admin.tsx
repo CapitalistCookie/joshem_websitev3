@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { MenuItem, SiteContent, Testimonial } from '../types';
 import { 
   getMenu, saveMenu, 
   getSiteContent, saveSiteContent,
   getTestimonials, saveTestimonials,
-  checkServerHealth
+  checkServerHealth,
+  FALLBACK_CONTENT
 } from '../services/storage';
 import { Link } from 'react-router-dom';
 
@@ -23,6 +24,11 @@ const Admin: React.FC = () => {
   const [siteContent, setSiteContent] = useState<SiteContent | null>(null);
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
   
+  // Drag and Drop State
+  const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
+  const dragItem = useRef<number | null>(null);
+  const dragOverItem = useRef<number | null>(null);
+
   // Forms State
   const [newItem, setNewItem] = useState<Partial<MenuItem>>({
     name: '', description: '', price: 0, category: 'Main', image: ''
@@ -48,9 +54,23 @@ const Admin: React.FC = () => {
 
   const loadAllData = async () => {
     try {
-      setItems(await getMenu());
-      setSiteContent(await getSiteContent());
-      setTestimonials(await getTestimonials());
+      const menu = await getMenu();
+      const content = await getSiteContent();
+      const reviews = await getTestimonials();
+
+      setItems(menu);
+      setTestimonials(reviews);
+      
+      setSiteContent({
+        ...FALLBACK_CONTENT,
+        ...content,
+        about: { ...FALLBACK_CONTENT.about, ...content?.about },
+        contact: { 
+          ...FALLBACK_CONTENT.contact, 
+          ...content?.contact,
+          hours: { ...FALLBACK_CONTENT.contact.hours, ...content?.contact?.hours }
+        }
+      });
     } catch (e) {
       console.error("Data load failed", e);
     }
@@ -72,6 +92,33 @@ const Admin: React.FC = () => {
     } finally {
       setTimeout(() => setIsSaving(false), 800);
     }
+  };
+
+  // --- DRAG AND DROP HANDLERS ---
+  const onDragStart = (index: number) => {
+    dragItem.current = index;
+    setDraggingIndex(index);
+  };
+
+  const onDragEnter = (index: number) => {
+    dragOverItem.current = index;
+    if (dragItem.current !== null && dragItem.current !== index) {
+      const newItems = [...items];
+      const draggedItemContent = newItems[dragItem.current];
+      newItems.splice(dragItem.current, 1);
+      newItems.splice(index, 0, draggedItemContent);
+      dragItem.current = index;
+      setDraggingIndex(index);
+      setItems(newItems);
+    }
+  };
+
+  const onDragEnd = () => {
+    setDraggingIndex(null);
+    dragItem.current = null;
+    dragOverItem.current = null;
+    // Finalize and save the new order
+    triggerSave(() => saveMenu(items));
   };
 
   const handleAddItem = (e: React.FormEvent) => {
@@ -104,6 +151,33 @@ const Admin: React.FC = () => {
     if (siteContent) {
       triggerSave(() => saveSiteContent(siteContent));
     }
+  };
+
+  const updateAbout = (field: keyof SiteContent['about'], value: string) => {
+    if (!siteContent) return;
+    setSiteContent({
+      ...siteContent,
+      about: { ...siteContent.about, [field]: value }
+    });
+  };
+
+  const updateContact = (field: keyof SiteContent['contact'], value: string) => {
+    if (!siteContent) return;
+    setSiteContent({
+      ...siteContent,
+      contact: { ...siteContent.contact, [field]: value }
+    });
+  };
+
+  const updateHours = (field: keyof SiteContent['contact']['hours'], value: string) => {
+    if (!siteContent) return;
+    setSiteContent({
+      ...siteContent,
+      contact: {
+        ...siteContent.contact,
+        hours: { ...siteContent.contact.hours, [field]: value }
+      }
+    });
   };
 
   const handleAddTestimonial = (e: React.FormEvent) => {
@@ -176,14 +250,17 @@ const Admin: React.FC = () => {
           {activeTab === 'menu' && (
             <div className="space-y-8 animate-fade-in-up">
               <div className="flex justify-between items-end">
-                  <h2 className="text-3xl font-bold">Menu Management</h2>
+                  <div>
+                    <h2 className="text-3xl font-bold">Menu Management</h2>
+                    <p className="text-sm text-gray-400 mt-1">Drag items to reorder them on the main site.</p>
+                  </div>
                   <p className="text-sm text-gray-500">{items.length} items total</p>
               </div>
               <form onSubmit={handleAddItem} className="bg-white p-6 rounded-xl shadow-sm space-y-4 border-l-4 border-blue-400">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="flex flex-col gap-1">
                     <label className="text-xs font-bold text-gray-400 uppercase">Item Name</label>
-                    <input className="border p-2 rounded focus:ring-2 focus:ring-blue-400 outline-none" value={newItem.name} onChange={e => setNewItem({...newItem, name: e.target.value})} required />
+                    <input className="border p-2 rounded focus:ring-2 focus:ring-blue-400 outline-none" value={newItem.name || ''} onChange={e => setNewItem({...newItem, name: e.target.value})} required />
                   </div>
                   <div className="flex flex-col gap-1">
                     <label className="text-xs font-bold text-gray-400 uppercase">Price ($)</label>
@@ -193,7 +270,7 @@ const Admin: React.FC = () => {
                     <label className="text-xs font-bold text-gray-400 uppercase">Category</label>
                     <select 
                       className="border p-2 rounded focus:ring-2 focus:ring-blue-400 outline-none bg-white" 
-                      value={newItem.category} 
+                      value={newItem.category || 'Main'} 
                       onChange={e => setNewItem({...newItem, category: e.target.value as any})}
                     >
                       <option value="Main">Main</option>
@@ -205,20 +282,38 @@ const Admin: React.FC = () => {
                 </div>
                 <div className="flex flex-col gap-1">
                     <label className="text-xs font-bold text-gray-400 uppercase">Image URL</label>
-                    <input className="border p-2 rounded focus:ring-2 focus:ring-blue-400 outline-none" placeholder="https://image-link.com/photo.jpg" value={newItem.image} onChange={e => setNewItem({...newItem, image: e.target.value})} />
+                    <input className="border p-2 rounded focus:ring-2 focus:ring-blue-400 outline-none" placeholder="https://image-link.com/photo.jpg" value={newItem.image || ''} onChange={e => setNewItem({...newItem, image: e.target.value})} />
                 </div>
                 <div className="flex flex-col gap-1">
                     <label className="text-xs font-bold text-gray-400 uppercase">Description</label>
-                    <textarea className="border p-2 w-full rounded focus:ring-2 focus:ring-blue-400 outline-none" rows={2} value={newItem.description} onChange={e => setNewItem({...newItem, description: e.target.value})} />
+                    <textarea className="border p-2 w-full rounded focus:ring-2 focus:ring-blue-400 outline-none" rows={2} value={newItem.description || ''} onChange={e => setNewItem({...newItem, description: e.target.value})} />
                 </div>
                 <button type="submit" className="w-full bg-[#36B1E5] text-white py-3 rounded-lg font-bold hover:bg-blue-600 shadow-md transition-colors">Add to Menu</button>
               </form>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {items.map(item => (
-                  <div key={item.id} className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center group">
+              <div className="grid grid-cols-1 gap-4">
+                {items.map((item, index) => (
+                  <div 
+                    key={item.id} 
+                    draggable 
+                    onDragStart={() => onDragStart(index)}
+                    onDragEnter={() => onDragEnter(index)}
+                    onDragEnd={onDragEnd}
+                    onDragOver={(e) => e.preventDefault()}
+                    className={`bg-white p-4 rounded-xl shadow-sm border flex justify-between items-center group cursor-move transition-all ${
+                        draggingIndex === index 
+                        ? 'opacity-40 border-dashed border-[#36B1E5] scale-[0.98]' 
+                        : 'border-gray-100 hover:border-blue-200'
+                    }`}
+                  >
                     <div className="flex items-center gap-4">
-                        <img src={item.image} className="w-12 h-12 rounded object-cover" onError={(e) => (e.currentTarget.src = 'https://placehold.co/100x100?text=Food')} />
+                        {/* Drag Handle Icon */}
+                        <div className="text-gray-300 group-hover:text-gray-400">
+                          <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M10 9h4V7h-4v2zm0 4h4v-2h-4v2zm0 4h4v-2h-4v2zm-4-8h4V7H6v2zm0 4h4v-2H6v2zm0 4h4v-2H6v2zm8-8h4V7h-4v2zm0 4h4v-2h-4v2zm0 4h4v-2h-4v2z" />
+                          </svg>
+                        </div>
+                        <img src={item.image} className="w-12 h-12 rounded object-cover flex-shrink-0" onError={(e) => (e.currentTarget.src = 'https://placehold.co/100x100?text=Food')} />
                         <div>
                           <h4 className="font-bold text-gray-800">{item.name}</h4>
                           <p className="text-xs text-[#36B1E5] font-bold">{item.category} • ${item.price.toFixed(2)}</p>
@@ -243,24 +338,45 @@ const Admin: React.FC = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="flex flex-col gap-1">
                           <label className="text-xs font-bold text-gray-400 uppercase">Section Tagline</label>
-                          <input className="border p-3 rounded focus:ring-2 focus:ring-blue-400 outline-none" value={siteContent.about.title} onChange={e => setSiteContent({...siteContent, about: {...siteContent.about, title: e.target.value}})} />
+                          <input 
+                            className="border p-3 rounded focus:ring-2 focus:ring-blue-400 outline-none" 
+                            value={siteContent.about?.title || ''} 
+                            onChange={e => updateAbout('title', e.target.value)} 
+                          />
                       </div>
                       <div className="flex flex-col gap-1">
                           <label className="text-xs font-bold text-gray-400 uppercase">Subtitle (Italicized)</label>
-                          <input className="border p-3 rounded focus:ring-2 focus:ring-blue-400 outline-none italic" value={siteContent.about.subtitle} onChange={e => setSiteContent({...siteContent, about: {...siteContent.about, subtitle: e.target.value}})} />
+                          <input 
+                            className="border p-3 rounded focus:ring-2 focus:ring-blue-400 outline-none italic" 
+                            value={siteContent.about?.subtitle || ''} 
+                            onChange={e => updateAbout('subtitle', e.target.value)} 
+                          />
                       </div>
                     </div>
                     <div className="flex flex-col gap-1">
                         <label className="text-xs font-bold text-gray-400 uppercase">Main Heading</label>
-                        <input className="border p-3 rounded focus:ring-2 focus:ring-blue-400 outline-none font-bold" value={siteContent.about.storyTitle} onChange={e => setSiteContent({...siteContent, about: {...siteContent.about, storyTitle: e.target.value}})} />
+                        <input 
+                          className="border p-3 rounded focus:ring-2 focus:ring-blue-400 outline-none font-bold" 
+                          value={siteContent.about?.storyTitle || ''} 
+                          onChange={e => updateAbout('storyTitle', e.target.value)} 
+                        />
                     </div>
                     <div className="flex flex-col gap-1">
                         <label className="text-xs font-bold text-gray-400 uppercase">Story Text</label>
-                        <textarea className="border p-3 rounded focus:ring-2 focus:ring-blue-400 outline-none" rows={5} value={siteContent.about.storyText} onChange={e => setSiteContent({...siteContent, about: {...siteContent.about, storyText: e.target.value}})} />
+                        <textarea 
+                          className="border p-3 rounded focus:ring-2 focus:ring-blue-400 outline-none" 
+                          rows={5} 
+                          value={siteContent.about?.storyText || ''} 
+                          onChange={e => updateAbout('storyText', e.target.value)} 
+                        />
                     </div>
                     <div className="flex flex-col gap-1">
                         <label className="text-xs font-bold text-gray-400 uppercase">Story Image URL</label>
-                        <input className="border p-3 rounded focus:ring-2 focus:ring-blue-400 outline-none" value={siteContent.about.storyImage} onChange={e => setSiteContent({...siteContent, about: {...siteContent.about, storyImage: e.target.value}})} />
+                        <input 
+                          className="border p-3 rounded focus:ring-2 focus:ring-blue-400 outline-none" 
+                          value={siteContent.about?.storyImage || ''} 
+                          onChange={e => updateAbout('storyImage', e.target.value)} 
+                        />
                     </div>
                 </div>
 
@@ -269,16 +385,28 @@ const Admin: React.FC = () => {
                     <h3 className="font-bold text-gray-400 uppercase text-xs tracking-widest mb-4">Contact Info & Hours</h3>
                     <div className="flex flex-col gap-1">
                         <label className="text-xs font-bold text-gray-400 uppercase">Address</label>
-                        <input className="border p-3 rounded focus:ring-2 focus:ring-blue-400 outline-none" value={siteContent.contact.address} onChange={e => setSiteContent({...siteContent, contact: {...siteContent.contact, address: e.target.value}})} />
+                        <input 
+                          className="border p-3 rounded focus:ring-2 focus:ring-blue-400 outline-none" 
+                          value={siteContent.contact?.address || ''} 
+                          onChange={e => updateContact('address', e.target.value)} 
+                        />
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="flex flex-col gap-1">
                             <label className="text-xs font-bold text-gray-400 uppercase">Phone</label>
-                            <input className="border p-3 rounded focus:ring-2 focus:ring-blue-400 outline-none" value={siteContent.contact.phone} onChange={e => setSiteContent({...siteContent, contact: {...siteContent.contact, phone: e.target.value}})} />
+                            <input 
+                              className="border p-3 rounded focus:ring-2 focus:ring-blue-400 outline-none" 
+                              value={siteContent.contact?.phone || ''} 
+                              onChange={e => updateContact('phone', e.target.value)} 
+                            />
                         </div>
                         <div className="flex flex-col gap-1">
                             <label className="text-xs font-bold text-gray-400 uppercase">Email</label>
-                            <input className="border p-3 rounded focus:ring-2 focus:ring-blue-400 outline-none" value={siteContent.contact.email} onChange={e => setSiteContent({...siteContent, contact: {...siteContent.contact, email: e.target.value}})} />
+                            <input 
+                              className="border p-3 rounded focus:ring-2 focus:ring-blue-400 outline-none" 
+                              value={siteContent.contact?.email || ''} 
+                              onChange={e => updateContact('email', e.target.value)} 
+                            />
                         </div>
                     </div>
                     
@@ -288,15 +416,27 @@ const Admin: React.FC = () => {
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div className="flex flex-col gap-1">
                           <label className="text-[10px] text-gray-400">Mon - Fri</label>
-                          <input className="border p-2 text-sm rounded" value={siteContent.contact.hours.monFri} onChange={e => setSiteContent({...siteContent, contact: {...siteContent.contact, hours: {...siteContent.contact.hours, monFri: e.target.value}}})} />
+                          <input 
+                            className="border p-2 text-sm rounded" 
+                            value={siteContent.contact?.hours?.monFri || ''} 
+                            onChange={e => updateHours('monFri', e.target.value)} 
+                          />
                         </div>
                         <div className="flex flex-col gap-1">
                           <label className="text-[10px] text-gray-400">Saturday</label>
-                          <input className="border p-2 text-sm rounded" value={siteContent.contact.hours.sat} onChange={e => setSiteContent({...siteContent, contact: {...siteContent.contact, hours: {...siteContent.contact.hours, sat: e.target.value}}})} />
+                          <input 
+                            className="border p-2 text-sm rounded" 
+                            value={siteContent.contact?.hours?.sat || ''} 
+                            onChange={e => updateHours('sat', e.target.value)} 
+                          />
                         </div>
                         <div className="flex flex-col gap-1">
                           <label className="text-[10px] text-gray-400">Sunday</label>
-                          <input className="border p-2 text-sm rounded" value={siteContent.contact.hours.sun} onChange={e => setSiteContent({...siteContent, contact: {...siteContent.contact, hours: {...siteContent.contact.hours, sun: e.target.value}}})} />
+                          <input 
+                            className="border p-2 text-sm rounded" 
+                            value={siteContent.contact?.hours?.sun || ''} 
+                            onChange={e => updateHours('sun', e.target.value)} 
+                          />
                         </div>
                       </div>
                     </div>
@@ -313,11 +453,11 @@ const Admin: React.FC = () => {
               <form onSubmit={handleAddTestimonial} className="bg-white p-6 rounded-xl shadow-sm space-y-4 border-l-4 border-yellow-400">
                 <div className="flex flex-col gap-1">
                     <label className="text-xs font-bold text-gray-400 uppercase">Customer Name</label>
-                    <input placeholder="e.g. John Doe" className="border p-2 rounded focus:ring-2 focus:ring-blue-400 outline-none" value={newTestimonial.name} onChange={e => setNewTestimonial({...newTestimonial, name: e.target.value})} />
+                    <input placeholder="e.g. John Doe" className="border p-2 rounded focus:ring-2 focus:ring-blue-400 outline-none" value={newTestimonial.name || ''} onChange={e => setNewTestimonial({...newTestimonial, name: e.target.value})} />
                 </div>
                 <div className="flex flex-col gap-1">
                     <label className="text-xs font-bold text-gray-400 uppercase">Review Text</label>
-                    <textarea placeholder="Their experience..." className="border p-2 rounded focus:ring-2 focus:ring-blue-400 outline-none" value={newTestimonial.text} onChange={e => setNewTestimonial({...newTestimonial, text: e.target.value})} />
+                    <textarea placeholder="Their experience..." className="border p-2 rounded focus:ring-2 focus:ring-blue-400 outline-none" value={newTestimonial.text || ''} onChange={e => setNewTestimonial({...newTestimonial, text: e.target.value})} />
                 </div>
                 <button type="submit" className="w-full bg-[#36B1E5] text-white py-3 rounded-lg font-bold hover:bg-blue-600 shadow-md">Post Testimonial</button>
               </form>
