@@ -25,6 +25,11 @@ export interface SiteContent {
       sun: string;
     };
   };
+  socials: {
+    facebook: string;
+    instagram: string;
+    twitter: string;
+  };
 }
 
 export interface Testimonial {

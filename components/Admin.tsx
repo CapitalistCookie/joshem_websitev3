@@ -69,6 +69,10 @@ const Admin: React.FC = () => {
           ...FALLBACK_CONTENT.contact, 
           ...content?.contact,
           hours: { ...FALLBACK_CONTENT.contact.hours, ...content?.contact?.hours }
+        },
+        socials: {
+          ...FALLBACK_CONTENT.socials,
+          ...content?.socials
         }
       });
     } catch (e) {
@@ -117,7 +121,6 @@ const Admin: React.FC = () => {
     setDraggingIndex(null);
     dragItem.current = null;
     dragOverItem.current = null;
-    // Finalize and save the new order
     triggerSave(() => saveMenu(items));
   };
 
@@ -177,6 +180,14 @@ const Admin: React.FC = () => {
         ...siteContent.contact,
         hours: { ...siteContent.contact.hours, [field]: value }
       }
+    });
+  };
+
+  const updateSocials = (field: keyof SiteContent['socials'], value: string) => {
+    if (!siteContent) return;
+    setSiteContent({
+      ...siteContent,
+      socials: { ...siteContent.socials, [field]: value }
     });
   };
 
@@ -307,7 +318,6 @@ const Admin: React.FC = () => {
                     }`}
                   >
                     <div className="flex items-center gap-4">
-                        {/* Drag Handle Icon */}
                         <div className="text-gray-300 group-hover:text-gray-400">
                           <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
                             <path d="M10 9h4V7h-4v2zm0 4h4v-2h-4v2zm0 4h4v-2h-4v2zm-4-8h4V7H6v2zm0 4h4v-2H6v2zm0 4h4v-2H6v2zm8-8h4V7h-4v2zm0 4h4v-2h-4v2zm0 4h4v-2h-4v2z" />
@@ -410,7 +420,6 @@ const Admin: React.FC = () => {
                         </div>
                     </div>
                     
-                    {/* Opening Hours */}
                     <div className="pt-4 border-t border-gray-100">
                       <label className="text-xs font-bold text-gray-400 uppercase block mb-2">Opening Hours</label>
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -438,6 +447,40 @@ const Admin: React.FC = () => {
                             onChange={e => updateHours('sun', e.target.value)} 
                           />
                         </div>
+                      </div>
+                    </div>
+                </div>
+
+                {/* Social Media Section */}
+                <div className="bg-white p-6 rounded-xl shadow-sm space-y-4 border-l-4 border-pink-400">
+                    <h3 className="font-bold text-gray-400 uppercase text-xs tracking-widest mb-4">Social Media</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="flex flex-col gap-1">
+                          <label className="text-xs font-bold text-gray-400 uppercase">Facebook URL</label>
+                          <input 
+                            className="border p-3 rounded focus:ring-2 focus:ring-blue-400 outline-none" 
+                            placeholder="https://facebook.com/..."
+                            value={siteContent.socials?.facebook || ''} 
+                            onChange={e => updateSocials('facebook', e.target.value)} 
+                          />
+                      </div>
+                      <div className="flex flex-col gap-1">
+                          <label className="text-xs font-bold text-gray-400 uppercase">Instagram URL</label>
+                          <input 
+                            className="border p-3 rounded focus:ring-2 focus:ring-blue-400 outline-none" 
+                            placeholder="https://instagram.com/..."
+                            value={siteContent.socials?.instagram || ''} 
+                            onChange={e => updateSocials('instagram', e.target.value)} 
+                          />
+                      </div>
+                      <div className="flex flex-col gap-1">
+                          <label className="text-xs font-bold text-gray-400 uppercase">Twitter URL</label>
+                          <input 
+                            className="border p-3 rounded focus:ring-2 focus:ring-blue-400 outline-none" 
+                            placeholder="https://twitter.com/..."
+                            value={siteContent.socials?.twitter || ''} 
+                            onChange={e => updateSocials('twitter', e.target.value)} 
+                          />
                       </div>
                     </div>
                 </div>
