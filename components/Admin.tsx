@@ -7,7 +7,9 @@ import {
   getOrders, saveOrders,
   checkServerHealth,
   verifyPassword, updatePassword,
-  FALLBACK_CONTENT
+  FALLBACK_CONTENT,
+  FALLBACK_MENU,
+  FALLBACK_TESTIMONIALS
 } from '../services/storage';
 import { Link } from 'react-router-dom';
 
@@ -22,10 +24,10 @@ const Admin: React.FC = () => {
   const [isServerLive, setIsServerLive] = useState<boolean | null>(null);
   const [isProcessingImage, setIsProcessingImage] = useState(false);
 
-  // Data States
-  const [items, setItems] = useState<MenuItem[]>([]);
-  const [siteContent, setSiteContent] = useState<SiteContent | null>(null);
-  const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
+  // Data States - Initialized with fallbacks to ensure production seeding
+  const [items, setItems] = useState<MenuItem[]>(FALLBACK_MENU);
+  const [siteContent, setSiteContent] = useState<SiteContent>(FALLBACK_CONTENT);
+  const [testimonials, setTestimonials] = useState<Testimonial[]>(FALLBACK_TESTIMONIALS);
   const [orders, setOrders] = useState<Order[]>([]);
   
   // Selection State for Bulk Actions
@@ -84,25 +86,27 @@ const Admin: React.FC = () => {
       const reviews = await getTestimonials();
       const ords = await getOrders();
 
-      setItems(menu);
-      setTestimonials(reviews);
-      setOrders(ords.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
+      if (menu && menu.length > 0) setItems(menu);
+      if (reviews && reviews.length > 0) setTestimonials(reviews);
+      if (ords) setOrders(ords.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
       
-      setSiteContent({
-        ...FALLBACK_CONTENT,
-        ...content,
-        hero: content?.hero || FALLBACK_CONTENT.hero,
-        about: { ...FALLBACK_CONTENT.about, ...content?.about },
-        contact: { 
-          ...FALLBACK_CONTENT.contact, 
-          ...content?.contact,
-          hours: { ...FALLBACK_CONTENT.contact.hours, ...content?.contact?.hours }
-        },
-        socials: {
-          ...FALLBACK_CONTENT.socials,
-          ...content?.socials
-        }
-      });
+      if (content) {
+        setSiteContent({
+          ...FALLBACK_CONTENT,
+          ...content,
+          hero: content.hero || FALLBACK_CONTENT.hero,
+          about: { ...FALLBACK_CONTENT.about, ...content.about },
+          contact: { 
+            ...FALLBACK_CONTENT.contact, 
+            ...content.contact,
+            hours: { ...FALLBACK_CONTENT.contact.hours, ...content.contact?.hours }
+          },
+          socials: {
+            ...FALLBACK_CONTENT.socials,
+            ...content.socials
+          }
+        });
+      }
     } catch (e) {
       console.error("Data load failed", e);
     }

@@ -136,14 +136,23 @@ const getFromHybrid = async <T>(apiPath: string, localKey: string, fallback: T, 
     if (res.ok) {
       const data = await res.json();
       const result = wrapper ? data[wrapper] : data;
-      if (result) {
+      
+      // If the server has valid non-empty data, prioritize it and sync cache
+      if (result && (!Array.isArray(result) || result.length > 0)) {
         setLocal(localKey, result);
         return result;
+      }
+      
+      // If the server returns empty, but we have cache, use the cache (user data)
+      if (cached && (!Array.isArray(cached) || (cached as any).length > 0)) {
+        return cached;
       }
     }
   } catch (e) {
     console.info(`Sync ignored for ${apiPath} (Offline). Using Cache.`);
   }
+  
+  // Return cache if exists, otherwise the rich hardcoded fallbacks
   return cached || fallback;
 };
 

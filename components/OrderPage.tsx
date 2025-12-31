@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { MenuItem, OrderItem, Order } from '../types';
-import { getMenu, saveOrders, getOrders } from '../services/storage';
+import { getMenu, saveOrders, getOrders, FALLBACK_MENU } from '../services/storage';
 import { Link } from 'react-router-dom';
 import Logo from './Logo';
 
 const OrderPage: React.FC = () => {
-  const [menu, setMenu] = useState<MenuItem[]>([]);
+  const [menu, setMenu] = useState<MenuItem[]>(FALLBACK_MENU);
   const [cart, setCart] = useState<OrderItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitted, setSubmitted] = useState(false);
@@ -22,9 +22,16 @@ const OrderPage: React.FC = () => {
 
   useEffect(() => {
     const loadMenu = async () => {
-      const data = await getMenu();
-      setMenu(data.filter(item => item.visible));
-      setLoading(false);
+      try {
+        const data = await getMenu();
+        if (data && data.length > 0) {
+          setMenu(data.filter(item => item.visible));
+        }
+      } catch (e) {
+        console.error("OrderPage menu sync error", e);
+      } finally {
+        setLoading(false);
+      }
     };
     loadMenu();
     window.scrollTo(0, 0);
@@ -138,7 +145,7 @@ const OrderPage: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
           {/* Menu Selection */}
           <div className="lg:col-span-2 space-y-8">
-            {loading ? (
+            {loading && menu.length === 0 ? (
               <div className="flex justify-center py-20">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#36B1E5]"></div>
               </div>
