@@ -16,6 +16,7 @@ import Logo from './Logo';
 
 type Tab = 'menu' | 'orders' | 'content' | 'testimonials' | 'settings';
 type OrderView = 'active' | 'archive';
+type SortBy = 'date' | 'status';
 
 const Admin: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -27,6 +28,8 @@ const Admin: React.FC = () => {
   const [isServerLive, setIsServerLive] = useState<boolean | null>(null);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [sortBy, setSortBy] = useState<SortBy>('date');
+  const [selectedOrderIds, setSelectedOrderIds] = useState<string[]>([]);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -112,8 +115,16 @@ const Admin: React.FC = () => {
     if (selectedDate) {
       list = list.filter(o => new Date(o.pickupTime).toDateString() === selectedDate);
     }
+
+    if (sortBy === 'status') {
+      const statusOrder: OrderStatus[] = ['pending', 'confirmed', 'ready', 'completed', 'cancelled'];
+      list.sort((a, b) => statusOrder.indexOf(a.status) - statusOrder.indexOf(b.status));
+    } else {
+      list.sort((a, b) => new Date(b.pickupTime).getTime() - new Date(a.pickupTime).getTime());
+    }
+
     return list;
-  }, [currentOrders, selectedDate]);
+  }, [currentOrders, selectedDate, sortBy]);
 
   const calendarDays = useMemo(() => {
     const days = [];
@@ -147,6 +158,34 @@ const Admin: React.FC = () => {
     const updated = orders.map(o => o.id === id ? { ...o, status } : o);
     setOrders(updated);
     triggerSave(() => saveOrders(updated));
+  };
+
+  const bulkUpdateOrderStatus = (status: OrderStatus) => {
+    const updated = orders.map(o => selectedOrderIds.includes(o.id) ? { ...o, status } : o);
+    setOrders(updated);
+    triggerSave(() => saveOrders(updated));
+    setSelectedOrderIds([]);
+  };
+
+  const bulkDeleteOrders = () => {
+    if (window.confirm(`Are you sure you want to delete ${selectedOrderIds.length} orders?`)) {
+      const updated = orders.filter(o => !selectedOrderIds.includes(o.id));
+      setOrders(updated);
+      triggerSave(() => saveOrders(updated));
+      setSelectedOrderIds([]);
+    }
+  };
+
+  const toggleOrderSelection = (id: string) => {
+    setSelectedOrderIds(prev => prev.includes(id) ? prev.filter(oid => oid !== id) : [...prev, id]);
+  };
+
+  const selectAllFilteredOrders = () => {
+    if (selectedOrderIds.length === filteredOrders.length) {
+      setSelectedOrderIds([]);
+    } else {
+      setSelectedOrderIds(filteredOrders.map(o => o.id));
+    }
   };
 
   const updateItemPartial = (id: string, partial: Partial<MenuItem>) => {
@@ -240,7 +279,6 @@ const Admin: React.FC = () => {
                  <div className={`w-2 h-2 rounded-full ${isSynced ? 'bg-blue-400 shadow-[0_0_8px_rgba(54,177,229,0.5)]' : 'bg-orange-500 animate-pulse'}`} title={isSynced ? "Data Synced to Cloud" : "Local Changes Only"}></div>
                  <div className={`w-2 h-2 rounded-full ${isServerLive ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]' : 'bg-red-500'}`} title={isServerLive ? "Server Online" : "Server Offline"}></div>
                </div>
-               {/* Mobile Toggle Button */}
                <button 
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                 className="md:hidden p-1.5 text-gray-400 hover:text-white transition-colors"
@@ -256,7 +294,6 @@ const Admin: React.FC = () => {
             </div>
         </div>
 
-        {/* Collapsible content for mobile */}
         <div className={`${isMobileMenuOpen ? 'block animate-fade-in-down' : 'hidden'} md:block flex-1 flex flex-col`}>
           <nav className="flex-1 space-y-1">
             {['orders', 'menu', 'content', 'testimonials', 'settings'].map((tab) => (
@@ -290,9 +327,17 @@ const Admin: React.FC = () => {
               <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                   <h2 className="text-3xl font-bold text-gray-900">Orders Dashboard</h2>
-                  <div className="flex gap-4 mt-2">
-                    <button onClick={() => setOrderView('active')} className={`text-sm font-bold pb-1 border-b-2 transition-all ${orderView === 'active' ? 'border-[#36B1E5] text-[#36B1E5]' : 'border-transparent text-gray-400'}`}>Active ({activeOrders.length})</button>
-                    <button onClick={() => setOrderView('archive')} className={`text-sm font-bold pb-1 border-b-2 transition-all ${orderView === 'archive' ? 'border-gray-500 text-gray-600' : 'border-transparent text-gray-400'}`}>Archive ({archivedOrders.length})</button>
+                  <div className="flex flex-wrap gap-4 mt-2 items-center">
+                    <div className="flex gap-4">
+                      <button onClick={() => { setOrderView('active'); setSelectedOrderIds([]); }} className={`text-sm font-bold pb-1 border-b-2 transition-all ${orderView === 'active' ? 'border-[#36B1E5] text-[#36B1E5]' : 'border-transparent text-gray-400'}`}>Active ({activeOrders.length})</button>
+                      <button onClick={() => { setOrderView('archive'); setSelectedOrderIds([]); }} className={`text-sm font-bold pb-1 border-b-2 transition-all ${orderView === 'archive' ? 'border-gray-500 text-gray-600' : 'border-transparent text-gray-400'}`}>Archive ({archivedOrders.length})</button>
+                    </div>
+                    <div className="w-[1px] h-4 bg-gray-200 mx-1 hidden sm:block"></div>
+                    <div className="flex gap-3 items-center">
+                      <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Sort By:</span>
+                      <button onClick={() => setSortBy('date')} className={`text-[10px] font-bold px-2 py-1 rounded-full transition-all ${sortBy === 'date' ? 'bg-black text-white' : 'bg-gray-100 text-gray-400 hover:bg-gray-200'}`}>Date</button>
+                      <button onClick={() => setSortBy('status')} className={`text-[10px] font-bold px-2 py-1 rounded-full transition-all ${sortBy === 'status' ? 'bg-black text-white' : 'bg-gray-100 text-gray-400 hover:bg-gray-200'}`}>State</button>
+                    </div>
                   </div>
                 </div>
               </header>
@@ -316,54 +361,86 @@ const Admin: React.FC = () => {
                 </div>
               </div>
 
+              {/* Bulk Actions Bar for Orders */}
+              <div className={`bg-gray-900 p-3 rounded-xl shadow-lg flex flex-wrap gap-2 items-center justify-between transition-all duration-300 ${selectedOrderIds.length > 0 ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2 pointer-events-none h-0 p-0 overflow-hidden'}`}>
+                <div className="flex items-center gap-3 px-2">
+                  <div className="text-[10px] font-black text-blue-400 uppercase">{selectedOrderIds.length} Selected</div>
+                  <button onClick={() => setSelectedOrderIds([])} className="text-[10px] font-bold text-gray-500 hover:text-white underline">Deselect All</button>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <button onClick={() => bulkUpdateOrderStatus('confirmed')} className="text-[10px] font-bold bg-blue-500 text-white px-3 py-1.5 rounded-lg hover:bg-blue-400 transition-colors">Mark Confirmed</button>
+                  <button onClick={() => bulkUpdateOrderStatus('completed')} className="text-[10px] font-bold bg-green-500 text-white px-3 py-1.5 rounded-lg hover:bg-green-400 transition-colors">Mark Completed</button>
+                  <div className="w-[1px] h-6 bg-gray-800 mx-1"></div>
+                  <button onClick={bulkDeleteOrders} className="text-[10px] font-bold bg-red-600 text-white px-3 py-1.5 rounded-lg hover:bg-red-500 transition-colors">Delete Selected</button>
+                </div>
+              </div>
+
               <div className="grid grid-cols-1 gap-3">
                 {filteredOrders.length === 0 ? (
                   <div className="py-20 text-center bg-white rounded-2xl border border-dashed border-gray-200 text-gray-400">No {orderView} orders found.</div>
                 ) : (
-                  filteredOrders.map((order) => {
-                    const simOrders = getSimultaneousOrders(order);
-                    return (
-                      <div key={order.id} className="bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-all group">
-                        <div className="p-3 md:p-4 flex flex-col md:flex-row items-start md:items-center gap-4">
-                          <div className="flex items-center gap-3 w-full md:w-1/4">
-                            <div className={`w-1.5 h-12 rounded-full ${order.status === 'pending' ? 'bg-yellow-400' : order.status === 'confirmed' ? 'bg-blue-400' : order.status === 'ready' ? 'bg-green-500' : order.status === 'completed' ? 'bg-gray-200' : 'bg-red-400'}`}></div>
-                            <div className="overflow-hidden">
-                              <div className="text-[9px] font-mono text-gray-300 uppercase truncate">ID: {order.id.split('-')[1]}</div>
-                              <div className="font-bold text-gray-900 text-sm truncate">{order.customerName}</div>
-                              <div className="flex items-center gap-1.5">
-                                <a href={`tel:${order.phone}`} className="text-[10px] text-gray-400 hover:text-[#36B1E5]">{order.phone}</a>
-                                <span className="text-gray-200">|</span>
-                                <a href={`mailto:${order.email}`} className="text-[10px] text-gray-400 hover:text-[#36B1E5] truncate">{order.email}</a>
-                              </div>
-                            </div>
-                          </div>
-                          <div className="w-full md:w-1/4">
-                            <div className="flex items-center gap-2">
-                              <span className="text-sm font-bold text-gray-800">{new Date(order.pickupTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                              <span className="text-[10px] text-gray-400">{new Date(order.pickupTime).toLocaleDateString([], { month: 'short', day: 'numeric' })}</span>
-                            </div>
-                            {simOrders.length > 0 && order.status !== 'completed' && order.status !== 'cancelled' && (
-                              <div className="relative group/tooltip inline-block">
-                                <div className="text-[9px] font-bold text-orange-600 bg-orange-50 px-1.5 py-0.5 rounded border border-orange-100 flex items-center gap-1 mt-1 cursor-help animate-pulse">
-                                  <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                                  +{simOrders.length} conflict
+                  <>
+                    <div className="px-4 py-2 flex items-center gap-4 text-[10px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-100">
+                      <input 
+                        type="checkbox" 
+                        className="rounded border-gray-300 text-[#36B1E5] focus:ring-[#36B1E5] cursor-pointer" 
+                        checked={selectedOrderIds.length === filteredOrders.length && filteredOrders.length > 0} 
+                        onChange={selectAllFilteredOrders} 
+                      />
+                      <span>Select All Orders</span>
+                    </div>
+                    {filteredOrders.map((order) => {
+                      const simOrders = getSimultaneousOrders(order);
+                      const isSelected = selectedOrderIds.includes(order.id);
+                      return (
+                        <div key={order.id} className={`bg-white rounded-xl border transition-all group relative ${isSelected ? 'border-[#36B1E5] ring-2 ring-blue-50 shadow-md' : 'border-gray-100 shadow-sm hover:shadow-md'}`}>
+                          <div className="p-3 md:p-4 flex flex-col md:flex-row items-start md:items-center gap-4">
+                            <div className="flex items-center gap-4 w-full md:w-1/4">
+                              <input 
+                                type="checkbox" 
+                                className="rounded border-gray-300 text-[#36B1E5] focus:ring-[#36B1E5] cursor-pointer" 
+                                checked={isSelected} 
+                                onChange={() => toggleOrderSelection(order.id)} 
+                              />
+                              <div className={`w-1.5 h-12 rounded-full ${order.status === 'pending' ? 'bg-yellow-400' : order.status === 'confirmed' ? 'bg-blue-400' : order.status === 'ready' ? 'bg-green-500' : order.status === 'completed' ? 'bg-gray-200' : 'bg-red-400'}`}></div>
+                              <div className="overflow-hidden">
+                                <div className="text-[9px] font-mono text-gray-300 uppercase truncate">ID: {order.id.split('-')[1]}</div>
+                                <div className="font-bold text-gray-900 text-sm truncate">{order.customerName}</div>
+                                <div className="flex items-center gap-1.5">
+                                  <a href={`tel:${order.phone}`} className="text-[10px] text-gray-400 hover:text-[#36B1E5]">{order.phone}</a>
+                                  <span className="text-gray-200">|</span>
+                                  <a href={`mailto:${order.email}`} className="text-[10px] text-gray-400 hover:text-[#36B1E5] truncate">{order.email}</a>
                                 </div>
-                                <div className="absolute z-50 bottom-full left-0 mb-2 w-64 p-2 bg-gray-900 text-white text-[10px] rounded shadow-2xl invisible group-hover/tooltip:visible">Other orders at similar time: {simOrders.map(o => <div key={o.id} className="mt-1 flex justify-between border-t border-gray-700 pt-1"><span>{o.customerName}</span><span>{new Date(o.pickupTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span></div>)}</div>
                               </div>
-                            )}
+                            </div>
+                            <div className="w-full md:w-1/4 pl-8 md:pl-0">
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm font-bold text-gray-800">{new Date(order.pickupTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                <span className="text-[10px] text-gray-400">{new Date(order.pickupTime).toLocaleDateString([], { month: 'short', day: 'numeric' })}</span>
+                              </div>
+                              {simOrders.length > 0 && order.status !== 'completed' && order.status !== 'cancelled' && (
+                                <div className="relative group/tooltip inline-block">
+                                  <div className="text-[9px] font-bold text-orange-600 bg-orange-50 px-1.5 py-0.5 rounded border border-orange-100 flex items-center gap-1 mt-1 cursor-help animate-pulse">
+                                    <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                    +{simOrders.length} conflict
+                                  </div>
+                                  <div className="absolute z-50 bottom-full left-0 mb-2 w-64 p-2 bg-gray-900 text-white text-[10px] rounded shadow-2xl invisible group-hover/tooltip:visible">Other orders at similar time: {simOrders.map(o => <div key={o.id} className="mt-1 flex justify-between border-t border-gray-700 pt-1"><span>{o.customerName}</span><span>{new Date(o.pickupTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span></div>)}</div>
+                                </div>
+                              )}
+                            </div>
+                            <div className="w-full md:w-1/4 text-[10px] text-gray-500 flex flex-wrap gap-1 pl-8 md:pl-0">{order.items.map((it, idx) => <span key={idx} className="bg-gray-50 px-1.5 py-0.5 rounded border border-gray-100">{it.quantity}x {it.name}</span>)}</div>
+                            <div className="w-full md:w-1/4 flex items-center justify-between md:justify-end gap-3 pl-8 md:pl-0">
+                              <div className="text-right"><div className="text-[9px] text-gray-400 uppercase font-bold">Total</div><div className="text-sm font-black text-[#36B1E5]">${order.total.toFixed(2)}</div></div>
+                              <select value={order.status} onChange={(e) => updateOrderStatus(order.id, e.target.value as OrderStatus)} className="text-[10px] font-bold bg-gray-100 border-none rounded-lg p-1.5 outline-none focus:ring-2 focus:ring-[#36B1E5] cursor-pointer"><option value="pending">Pending</option><option value="confirmed">Confirmed</option><option value="ready">Ready</option><option value="completed">Complete</option><option value="cancelled">Cancel</option></select>
+                              <button onClick={() => { if(window.confirm('Delete order?')) setOrders(orders.filter(o => o.id !== order.id)) }} className="text-gray-300 hover:text-red-500 transition-colors p-1"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button>
+                            </div>
                           </div>
-                          <div className="w-full md:w-1/4 text-[10px] text-gray-500 flex flex-wrap gap-1">{order.items.map((it, idx) => <span key={idx} className="bg-gray-50 px-1.5 py-0.5 rounded border border-gray-100">{it.quantity}x {it.name}</span>)}</div>
-                          <div className="w-full md:w-1/4 flex items-center justify-between md:justify-end gap-3">
-                            <div className="text-right"><div className="text-[9px] text-gray-400 uppercase font-bold">Total</div><div className="text-sm font-black text-[#36B1E5]">${order.total.toFixed(2)}</div></div>
-                            <select value={order.status} onChange={(e) => updateOrderStatus(order.id, e.target.value as OrderStatus)} className="text-[10px] font-bold bg-gray-100 border-none rounded-lg p-1.5 outline-none focus:ring-2 focus:ring-[#36B1E5] cursor-pointer"><option value="pending">Pending</option><option value="confirmed">Confirmed</option><option value="ready">Ready</option><option value="completed">Complete</option><option value="cancelled">Cancel</option></select>
-                            <button onClick={() => { if(window.confirm('Delete order?')) setOrders(orders.filter(o => o.id !== order.id)) }} className="text-gray-300 hover:text-red-500 transition-colors p-1"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button>
-                          </div>
+                          {order.comments && <div className="px-4 pb-3 border-t border-gray-50 pt-2 flex items-center gap-2 pl-12"><span className="text-[9px] font-black text-blue-400 uppercase">Note:</span><p className="text-[10px] text-gray-500 italic">{order.comments}</p></div>}
+                          {order.allergens && <div className="px-4 pb-3 flex items-center gap-2 pl-12"><span className="text-[9px] font-black text-red-400 uppercase">Allergy:</span><p className="text-[10px] text-red-600 font-bold">{order.allergens}</p></div>}
                         </div>
-                        {order.comments && <div className="px-4 pb-3 border-t border-gray-50 pt-2 flex items-center gap-2"><span className="text-[9px] font-black text-blue-400 uppercase">Note:</span><p className="text-[10px] text-gray-500 italic">{order.comments}</p></div>}
-                        {order.allergens && <div className="px-4 pb-3 flex items-center gap-2"><span className="text-[9px] font-black text-red-400 uppercase">Allergy:</span><p className="text-[10px] text-red-600 font-bold">{order.allergens}</p></div>}
-                      </div>
-                    );
-                  })
+                      );
+                    })}
+                  </>
                 )}
               </div>
             </div>
@@ -376,7 +453,6 @@ const Admin: React.FC = () => {
                 <p className="text-sm text-gray-500">{items.length} items total</p>
               </div>
 
-              {/* Edit/Add Form */}
               <form onSubmit={(e) => {
                 e.preventDefault();
                 if (!newItem.name) return;
@@ -397,7 +473,6 @@ const Admin: React.FC = () => {
                 </div>
                 <div className="flex flex-col gap-1"><label className="text-[10px] font-bold text-gray-400 uppercase">Description</label><textarea className="border p-2 rounded-lg text-sm outline-none" rows={2} value={newItem.description || ''} onChange={e => setNewItem({...newItem, description: e.target.value})} /></div>
                 
-                {/* Image URL and Upload Controls */}
                 <div className="flex flex-col gap-1">
                     <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Item Image</label>
                     <div className="flex gap-4 items-start">
@@ -443,7 +518,6 @@ const Admin: React.FC = () => {
                 <div className="flex gap-4 pt-4"><button type="submit" className={`flex-1 py-3 rounded-xl font-bold text-white shadow-lg ${editingItem ? 'bg-yellow-500' : 'bg-[#36B1E5] hover:bg-black'}`}>{editingItem ? 'Save Changes' : 'Add to Menu'}</button>{editingItem && <button type="button" onClick={() => { setEditingItem(null); setNewItem({ name: '', description: '', prices: { small: 0, large: 0 }, category: 'Main', image: '', visible: true, isDailySpecial: false }); }} className="px-6 py-3 rounded-xl bg-gray-100 text-gray-600 font-bold">Cancel</button>}</div>
               </form>
 
-              {/* Bulk Actions Bar */}
               <div className="bg-gray-900 p-3 rounded-xl shadow-lg flex flex-wrap gap-2 items-center justify-between">
                 <div className="text-[10px] font-black text-gray-500 uppercase px-2">Bulk Actions:</div>
                 <div className="flex gap-2">
@@ -455,7 +529,6 @@ const Admin: React.FC = () => {
                 </div>
               </div>
 
-              {/* Menu Items List */}
               <div className="grid grid-cols-1 gap-2">
                 {items.map((item, index) => (
                   <div key={item.id} className={`bg-white p-3 rounded-xl border flex justify-between items-center group transition-all ${!item.visible ? 'opacity-50' : 'opacity-100'} hover:border-[#36B1E5]/30`}>
@@ -490,7 +563,6 @@ const Admin: React.FC = () => {
             <div className="space-y-8 animate-fade-in-up">
               <div className="flex justify-between items-center"><h2 className="text-3xl font-bold">Site Configuration</h2><button onClick={() => triggerSave(() => saveSiteContent(siteContent))} className="bg-[#36B1E5] text-white px-8 py-2 rounded-xl font-bold hover:bg-black transition-colors shadow-lg">Save All Changes</button></div>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                {/* Hero Images */}
                 <div className="bg-white p-6 rounded-2xl border shadow-sm border-l-4 border-l-[#36B1E5]">
                   <h3 className="font-bold text-gray-900 mb-4 uppercase text-xs tracking-widest flex items-center gap-2">Hero Images</h3>
                   <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 no-scrollbar">
@@ -501,7 +573,6 @@ const Admin: React.FC = () => {
                   </div>
                 </div>
 
-                {/* About Story */}
                 <div className="bg-white p-6 rounded-2xl border shadow-sm border-l-4 border-l-orange-400">
                    <h3 className="font-bold text-gray-900 mb-4 uppercase text-xs tracking-widest">About Story</h3>
                    <div className="space-y-4">
@@ -511,14 +582,13 @@ const Admin: React.FC = () => {
                    </div>
                 </div>
 
-                {/* Contact Information */}
                 <div className="bg-white p-6 rounded-2xl border shadow-sm border-l-4 border-l-blue-400">
                    <h3 className="font-bold text-gray-900 mb-4 uppercase text-xs tracking-widest">Contact Information</h3>
                    <div className="space-y-4">
                       <div className="flex flex-col gap-1"><label className="text-[10px] font-bold text-gray-400 uppercase">Physical Address</label><input className="border p-2.5 rounded-xl text-sm outline-none" value={siteContent.contact.address} onChange={e => setSiteContent({...siteContent, contact: {...siteContent.contact, address: e.target.value}})} /></div>
                       <div className="grid grid-cols-2 gap-4">
                         <div className="flex flex-col gap-1"><label className="text-[10px] font-bold text-gray-400 uppercase">Phone</label><input className="border p-2.5 rounded-xl text-sm outline-none" value={siteContent.contact.phone} onChange={e => setSiteContent({...siteContent, contact: {...siteContent.contact, phone: e.target.value}})} /></div>
-                        <div className="flex flex-col gap-1"><label className="text-[10px) font-bold text-gray-400 uppercase">Email</label><input className="border p-2.5 rounded-xl text-sm outline-none" value={siteContent.contact.email} onChange={e => setSiteContent({...siteContent, contact: {...siteContent.contact, email: e.target.value}})} /></div>
+                        <div className="flex flex-col gap-1"><label className="text-[10px] font-bold text-gray-400 uppercase">Email</label><input className="border p-2.5 rounded-xl text-sm outline-none" value={siteContent.contact.email} onChange={e => setSiteContent({...siteContent, contact: {...siteContent.contact, email: e.target.value}})} /></div>
                       </div>
                       <div className="pt-2 border-t mt-4">
                         <p className="text-[10px] font-black text-gray-400 uppercase mb-2">Opening Hours</p>
@@ -531,7 +601,6 @@ const Admin: React.FC = () => {
                    </div>
                 </div>
 
-                {/* Social Media Links */}
                 <div className="bg-white p-6 rounded-2xl border shadow-sm border-l-4 border-l-green-400">
                    <h3 className="font-bold text-gray-900 mb-4 uppercase text-xs tracking-widest">Social Media Links</h3>
                    <div className="space-y-4">
