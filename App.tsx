@@ -8,6 +8,7 @@ import Testimonials from './components/Testimonials';
 import Contact from './components/Contact';
 import Footer from './components/Footer';
 import Admin from './components/Admin';
+import OrderPage from './components/OrderPage';
 
 const MainLayout: React.FC = () => {
   return (
@@ -28,6 +29,7 @@ const App: React.FC = () => {
     <Router>
       <Routes>
         <Route path="/" element={<MainLayout />} />
+        <Route path="/order" element={<OrderPage />} />
         <Route path="/admin" element={<Admin />} />
       </Routes>
     </Router>
