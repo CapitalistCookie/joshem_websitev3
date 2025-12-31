@@ -26,6 +26,7 @@ const Admin: React.FC = () => {
   const [isSynced, setIsSynced] = useState(true);
   const [isServerLive, setIsServerLive] = useState<boolean | null>(null);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -188,6 +189,11 @@ const Admin: React.FC = () => {
     }
   };
 
+  const handleTabChange = (tab: Tab) => {
+    setActiveTab(tab);
+    setIsMobileMenuOpen(false); // Auto-collapse on selection
+  };
+
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center p-6">
@@ -226,35 +232,54 @@ const Admin: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col md:flex-row">
-      <aside className="bg-gray-900 text-white w-full md:w-64 p-6 flex flex-col sticky top-0 h-auto md:h-screen z-40">
-        <div className="flex items-center justify-between mb-8">
+      <aside className="bg-gray-900 text-white w-full md:w-64 p-6 flex flex-col sticky top-0 h-auto md:h-screen z-40 transition-all duration-300">
+        <div className="flex items-center justify-between mb-4 md:mb-8">
             <h1 className="text-2xl font-script text-[#36B1E5]">JoShem Admin</h1>
-            <div className="flex items-center gap-2">
-               <div className={`w-2 h-2 rounded-full ${isSynced ? 'bg-blue-400 shadow-[0_0_8px_rgba(54,177,229,0.5)]' : 'bg-orange-500 animate-pulse'}`} title={isSynced ? "Data Synced to Cloud" : "Local Changes Only"}></div>
-               <div className={`w-2 h-2 rounded-full ${isServerLive ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]' : 'bg-red-500'}`} title={isServerLive ? "Server Online" : "Server Offline"}></div>
+            <div className="flex items-center gap-3">
+               <div className="flex items-center gap-2">
+                 <div className={`w-2 h-2 rounded-full ${isSynced ? 'bg-blue-400 shadow-[0_0_8px_rgba(54,177,229,0.5)]' : 'bg-orange-500 animate-pulse'}`} title={isSynced ? "Data Synced to Cloud" : "Local Changes Only"}></div>
+                 <div className={`w-2 h-2 rounded-full ${isServerLive ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]' : 'bg-red-500'}`} title={isServerLive ? "Server Online" : "Server Offline"}></div>
+               </div>
+               {/* Mobile Toggle Button */}
+               <button 
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                className="md:hidden p-1.5 text-gray-400 hover:text-white transition-colors"
+               >
+                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                   {isMobileMenuOpen ? (
+                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                   ) : (
+                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16m-7 6h7" />
+                   )}
+                 </svg>
+               </button>
             </div>
         </div>
-        <nav className="flex-1 space-y-1">
-          {['orders', 'menu', 'content', 'testimonials', 'settings'].map((tab) => (
-            <button 
-              key={tab} onClick={() => setActiveTab(tab as Tab)}
-              className={`w-full text-left px-4 py-2.5 rounded-lg capitalize transition-all text-sm ${activeTab === tab ? 'bg-[#36B1E5] text-white font-bold' : 'text-gray-400 hover:bg-gray-800'}`}
-            >
-              {tab}
-            </button>
-          ))}
-        </nav>
-        <div className="mt-auto pt-6 border-t border-gray-800 flex flex-col gap-2">
-           <div className="flex items-center justify-between px-2 text-[10px] text-gray-500 font-bold uppercase tracking-widest">
-              <span>Status:</span>
-              <span className={isServerLive ? 'text-green-500' : 'text-red-500'}>{isServerLive ? 'Online' : 'Offline'}</span>
-           </div>
-           <button 
-             onClick={() => setIsAuthenticated(false)} 
-             className="text-gray-500 text-xs hover:text-white border border-gray-800 py-2 rounded font-bold uppercase tracking-widest transition-colors"
-           >
-             Sign Out
-           </button>
+
+        {/* Collapsible content for mobile */}
+        <div className={`${isMobileMenuOpen ? 'block animate-fade-in-down' : 'hidden'} md:block flex-1 flex flex-col`}>
+          <nav className="flex-1 space-y-1">
+            {['orders', 'menu', 'content', 'testimonials', 'settings'].map((tab) => (
+              <button 
+                key={tab} onClick={() => handleTabChange(tab as Tab)}
+                className={`w-full text-left px-4 py-2.5 rounded-lg capitalize transition-all text-sm ${activeTab === tab ? 'bg-[#36B1E5] text-white font-bold' : 'text-gray-400 hover:bg-gray-800'}`}
+              >
+                {tab}
+              </button>
+            ))}
+          </nav>
+          <div className="mt-auto pt-6 border-t border-gray-800 flex flex-col gap-2">
+             <div className="flex items-center justify-between px-2 text-[10px] text-gray-500 font-bold uppercase tracking-widest">
+                <span>Status:</span>
+                <span className={isServerLive ? 'text-green-500' : 'text-red-500'}>{isServerLive ? 'Online' : 'Offline'}</span>
+             </div>
+             <button 
+               onClick={() => setIsAuthenticated(false)} 
+               className="text-gray-500 text-xs hover:text-white border border-gray-800 py-2 rounded font-bold uppercase tracking-widest transition-colors"
+             >
+               Sign Out
+             </button>
+          </div>
         </div>
       </aside>
 
@@ -486,14 +511,14 @@ const Admin: React.FC = () => {
                    </div>
                 </div>
 
-                {/* RESTORED: Contact Information */}
+                {/* Contact Information */}
                 <div className="bg-white p-6 rounded-2xl border shadow-sm border-l-4 border-l-blue-400">
                    <h3 className="font-bold text-gray-900 mb-4 uppercase text-xs tracking-widest">Contact Information</h3>
                    <div className="space-y-4">
                       <div className="flex flex-col gap-1"><label className="text-[10px] font-bold text-gray-400 uppercase">Physical Address</label><input className="border p-2.5 rounded-xl text-sm outline-none" value={siteContent.contact.address} onChange={e => setSiteContent({...siteContent, contact: {...siteContent.contact, address: e.target.value}})} /></div>
                       <div className="grid grid-cols-2 gap-4">
                         <div className="flex flex-col gap-1"><label className="text-[10px] font-bold text-gray-400 uppercase">Phone</label><input className="border p-2.5 rounded-xl text-sm outline-none" value={siteContent.contact.phone} onChange={e => setSiteContent({...siteContent, contact: {...siteContent.contact, phone: e.target.value}})} /></div>
-                        <div className="flex flex-col gap-1"><label className="text-[10px] font-bold text-gray-400 uppercase">Email</label><input className="border p-2.5 rounded-xl text-sm outline-none" value={siteContent.contact.email} onChange={e => setSiteContent({...siteContent, contact: {...siteContent.contact, email: e.target.value}})} /></div>
+                        <div className="flex flex-col gap-1"><label className="text-[10px) font-bold text-gray-400 uppercase">Email</label><input className="border p-2.5 rounded-xl text-sm outline-none" value={siteContent.contact.email} onChange={e => setSiteContent({...siteContent, contact: {...siteContent.contact, email: e.target.value}})} /></div>
                       </div>
                       <div className="pt-2 border-t mt-4">
                         <p className="text-[10px] font-black text-gray-400 uppercase mb-2">Opening Hours</p>
@@ -506,7 +531,7 @@ const Admin: React.FC = () => {
                    </div>
                 </div>
 
-                {/* RESTORED: Social Media Links */}
+                {/* Social Media Links */}
                 <div className="bg-white p-6 rounded-2xl border shadow-sm border-l-4 border-l-green-400">
                    <h3 className="font-bold text-gray-900 mb-4 uppercase text-xs tracking-widest">Social Media Links</h3>
                    <div className="space-y-4">
