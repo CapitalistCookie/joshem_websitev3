@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import Logo from './Logo';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { SiteContent } from '../types';
 import { getSiteContent } from '../services/storage';
 
 const Footer: React.FC = () => {
   const [content, setContent] = useState<SiteContent | null>(null);
+  const location = useLocation();
 
   useEffect(() => {
     const loadData = async () => {
@@ -14,6 +15,18 @@ const Footer: React.FC = () => {
     };
     loadData();
   }, []);
+
+  const scrollToSection = (id: string) => {
+    if (location.pathname !== '/') {
+      // If we are on admin page or elsewhere, go home first with the hash
+      window.location.href = `/#${id}`;
+    } else {
+      const element = document.getElementById(id);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+  };
 
   const contact = content?.contact;
   const socials = content?.socials;
@@ -37,11 +50,43 @@ const Footer: React.FC = () => {
           <div>
             <h3 className="font-bold text-lg mb-6 border-b border-gray-800 pb-2">Explore</h3>
             <ul className="space-y-3 text-gray-400 text-sm">
-              <li><a href="#hero" className="hover:text-[#36B1E5] transition-colors">Home</a></li>
-              <li><a href="#about" className="hover:text-[#36B1E5] transition-colors">Our Story</a></li>
-              <li><a href="#menu" className="hover:text-[#36B1E5] transition-colors">Menu</a></li>
-              <li><a href="#testimonials" className="hover:text-[#36B1E5] transition-colors">Reviews</a></li>
-              <li><Link to="/admin" className="hover:text-[#36B1E5] transition-colors">Site Config</Link></li>
+              <li>
+                <button 
+                  onClick={() => scrollToSection('hero')} 
+                  className="hover:text-[#36B1E5] transition-colors text-left"
+                >
+                  Home
+                </button>
+              </li>
+              <li>
+                <button 
+                  onClick={() => scrollToSection('about')} 
+                  className="hover:text-[#36B1E5] transition-colors text-left"
+                >
+                  Our Story
+                </button>
+              </li>
+              <li>
+                <button 
+                  onClick={() => scrollToSection('menu')} 
+                  className="hover:text-[#36B1E5] transition-colors text-left"
+                >
+                  Menu
+                </button>
+              </li>
+              <li>
+                <button 
+                  onClick={() => scrollToSection('testimonials')} 
+                  className="hover:text-[#36B1E5] transition-colors text-left"
+                >
+                  Reviews
+                </button>
+              </li>
+              <li>
+                <Link to="/admin" className="hover:text-[#36B1E5] transition-colors">
+                  Site Config
+                </Link>
+              </li>
             </ul>
           </div>
 

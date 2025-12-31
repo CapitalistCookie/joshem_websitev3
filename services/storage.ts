@@ -4,7 +4,8 @@ import { MenuItem, SiteContent, Testimonial } from '../types';
 const KEYS = {
   MENU: 'joshem_menu_data_v2',
   CONTENT: 'joshem_site_content_v2',
-  TESTIMONIALS: 'joshem_testimonials_v2'
+  TESTIMONIALS: 'joshem_testimonials_v2',
+  AUTH_PASS: 'joshem_auth_pass_v2'
 };
 
 // --- RICH FALLBACK DATA ---
@@ -13,29 +14,42 @@ export const FALLBACK_MENU: MenuItem[] = [
       id: '1',
       name: 'Chicken Adobo',
       description: 'The national dish. Chicken marinated in vinegar, soy sauce, garlic, and peppercorns, braised to savory perfection.',
-      price: 13.99,
+      prices: { small: 10.99, large: 15.99 },
       category: 'Main',
-      image: 'https://images.unsplash.com/photo-1582878826629-29b7ad1cdc43?auto=format&fit=crop&q=80&w=800'
+      image: 'https://images.unsplash.com/photo-1582878826629-29b7ad1cdc43?auto=format&fit=crop&q=80&w=800',
+      visible: true,
+      isDailySpecial: true
     },
     {
       id: '2',
       name: 'Lumpia Shanghai',
       description: 'Crispy fried spring rolls filled with savory ground pork, carrots, and onions. Served with sweet chili sauce.',
-      price: 8.50,
+      prices: { small: 8.50, large: 14.50 },
       category: 'Appetizer',
-      image: 'https://images.unsplash.com/photo-1626804475297-411dbe63c4df?auto=format&fit=crop&q=80&w=800'
+      image: 'https://images.unsplash.com/photo-1626804475297-411dbe63c4df?auto=format&fit=crop&q=80&w=800',
+      visible: true,
+      isDailySpecial: false
     },
     {
       id: '3',
       name: 'Sinigang na Baboy',
       description: 'A comforting sour tamarind soup with tender pork belly, kangkong (water spinach), and vegetables.',
-      price: 15.50,
+      prices: { small: 12.50, large: 18.50 },
       category: 'Main',
-      image: 'https://images.unsplash.com/photo-1604579963283-f661759695d6?auto=format&fit=crop&q=80&w=800'
+      image: 'https://images.unsplash.com/photo-1604579963283-f661759695d6?auto=format&fit=crop&q=80&w=800',
+      visible: true,
+      isDailySpecial: false
     }
 ];
 
 export const FALLBACK_CONTENT: SiteContent = {
+  hero: {
+    images: [
+      { id: 'h1', url: "https://images.unsplash.com/photo-1518509562904-e7ef99cdcc86?auto=format&fit=crop&q=80&w=1920", visible: true },
+      { id: 'h2', url: "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?auto=format&fit=crop&q=80&w=1920", visible: true },
+      { id: 'h3', url: "https://images.unsplash.com/photo-1534944923498-84e45eb3dbf4?auto=format&fit=crop&q=80&w=1920", visible: true }
+    ]
+  },
   about: {
       title: "Our Heritage",
       subtitle: "Authentic Filipino flavors served with a smile.",
@@ -58,7 +72,7 @@ export const FALLBACK_CONTENT: SiteContent = {
       instagram: "https://instagram.com/joshemfoods",
       twitter: "https://twitter.com/joshemfoods"
     }
-};
+  };
 
 export const FALLBACK_TESTIMONIALS: Testimonial[] = [
     { id: 1, name: "Maria Santos", rating: 5, text: "Absolutely the best Filipino food I've had outside of Manila. The Adobo tastes just like home!" },
@@ -157,3 +171,47 @@ export const saveSiteContent = (content: SiteContent) => saveToHybrid('/content'
 
 export const getTestimonials = () => getFromHybrid<Testimonial[]>('/data', KEYS.TESTIMONIALS, FALLBACK_TESTIMONIALS, 'testimonials');
 export const saveTestimonials = (items: Testimonial[]) => saveToHybrid('/testimonials', KEYS.TESTIMONIALS, items);
+
+// --- AUTH API ---
+export const verifyPassword = async (password: string): Promise<boolean> => {
+  try {
+    // Try server verification first
+    const res = await fetchWithTimeout('/api/auth/verify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password })
+    });
+    
+    if (res.ok) {
+      // If server accepts it, cache it locally for offline use
+      setLocal(KEYS.AUTH_PASS, password);
+      return true;
+    }
+    return false;
+  } catch (e) {
+    // If server is unreachable, check local cache
+    const cached = getLocal<string>(KEYS.AUTH_PASS);
+    // If no cache exists, check default 'admin123' (safe fallback for initial offline setup)
+    const isValid = cached ? cached === password : password === 'admin123';
+    return isValid;
+  }
+};
+
+export const updatePassword = async (password: string): Promise<boolean> => {
+  // Always update local cache first
+  setLocal(KEYS.AUTH_PASS, password);
+  
+  try {
+    // Try to update server
+    const res = await fetchWithTimeout('/api/auth/update', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password })
+    });
+    return res.ok;
+  } catch (e) {
+    // Return true because we successfully updated locally (Optimistic UI)
+    // Server will eventually get updated or user will update again later
+    return false; 
+  }
+};

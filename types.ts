@@ -1,13 +1,27 @@
+export interface HeroImage {
+  id: string;
+  url: string;
+  visible: boolean;
+}
+
 export interface MenuItem {
   id: string;
   name: string;
   description: string;
-  price: number;
+  prices: {
+    small: number;
+    large: number;
+  };
   category: 'Main' | 'Appetizer' | 'Dessert' | 'Drinks';
   image: string; // Base64 or URL
+  visible: boolean;
+  isDailySpecial: boolean;
 }
 
 export interface SiteContent {
+  hero: {
+    images: HeroImage[];
+  };
   about: {
     title: string;
     subtitle: string;

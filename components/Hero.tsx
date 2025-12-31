@@ -1,21 +1,36 @@
 import React, { useState, useEffect } from 'react';
 import Logo from './Logo';
-
-const IMAGES = [
-  "https://images.unsplash.com/photo-1518509562904-e7ef99cdcc86?auto=format&fit=crop&q=80&w=1920", // Tropical
-  "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?auto=format&fit=crop&q=80&w=1920", // Food BBQ
-  "https://images.unsplash.com/photo-1534944923498-84e45eb3dbf4?auto=format&fit=crop&q=80&w=1920"  // Landscape
-];
+import { getSiteContent, FALLBACK_CONTENT } from '../services/storage';
 
 const Hero: React.FC<{ id: string }> = ({ id }) => {
   const [currentImage, setCurrentImage] = useState(0);
+  const [heroImages, setHeroImages] = useState(FALLBACK_CONTENT.hero.images);
 
   useEffect(() => {
+    const loadData = async () => {
+      try {
+        const data = await getSiteContent();
+        if (data?.hero?.images) {
+          setHeroImages(data.hero.images);
+        }
+      } catch (e) {
+        console.error("Hero data load error", e);
+      }
+    };
+    loadData();
+  }, []);
+
+  const visibleImages = heroImages.filter(img => img.visible);
+  // Fallback if no images are visible
+  const displayImages = visibleImages.length > 0 ? visibleImages : [FALLBACK_CONTENT.hero.images[0]];
+
+  useEffect(() => {
+    if (displayImages.length <= 1) return;
     const timer = setInterval(() => {
-      setCurrentImage((prev) => (prev + 1) % IMAGES.length);
+      setCurrentImage((prev) => (prev + 1) % displayImages.length);
     }, 5000);
     return () => clearInterval(timer);
-  }, []);
+  }, [displayImages.length]);
 
   const scrollToMenu = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -27,14 +42,14 @@ const Hero: React.FC<{ id: string }> = ({ id }) => {
 
   return (
     <section id={id} className="relative h-screen w-full overflow-hidden">
-      {IMAGES.map((img, index) => (
+      {displayImages.map((img, index) => (
         <div
-          key={index}
+          key={img.id}
           className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
             index === currentImage ? 'opacity-100' : 'opacity-0'
           }`}
         >
-          <img src={img} alt="Hero" className="w-full h-full object-cover" />
+          <img src={img.url} alt="Hero" className="w-full h-full object-cover" />
           <div className="absolute inset-0 bg-black bg-opacity-40"></div>
         </div>
       ))}

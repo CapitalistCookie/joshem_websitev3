@@ -19,17 +19,29 @@ app.use(bodyParser.json({ limit: '100mb' }));
 app.use(bodyParser.urlencoded({ limit: '100mb', extended: true }));
 
 const INITIAL_DATA = {
+  auth: {
+    password: 'admin123'
+  },
   menu: [
     {
       id: '1',
       name: 'Chicken Adobo',
       description: 'The national dish. Chicken marinated in vinegar, soy sauce, garlic, and peppercorns, braised to savory perfection.',
-      price: 13.99,
+      prices: { small: 10.99, large: 15.99 },
       category: 'Main',
-      image: 'https://images.unsplash.com/photo-1582878826629-29b7ad1cdc43?auto=format&fit=crop&q=80&w=800'
+      image: 'https://images.unsplash.com/photo-1582878826629-29b7ad1cdc43?auto=format&fit=crop&q=80&w=800',
+      visible: true,
+      isDailySpecial: true
     }
   ],
   content: {
+    hero: {
+      images: [
+        { id: 'h1', url: "https://images.unsplash.com/photo-1518509562904-e7ef99cdcc86?auto=format&fit=crop&q=80&w=1920", visible: true },
+        { id: 'h2', url: "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?auto=format&fit=crop&q=80&w=1920", visible: true },
+        { id: 'h3', url: "https://images.unsplash.com/photo-1534944923498-84e45eb3dbf4?auto=format&fit=crop&q=80&w=1920", visible: true }
+      ]
+    },
     about: {
       title: "Our Heritage",
       subtitle: "Authentic Filipino flavors served with a smile.",
@@ -87,7 +99,10 @@ const readDb = () => {
 // --- ROUTES ---
 
 app.get('/api/data', (req, res) => {
-    res.json(readDb());
+    const data = readDb();
+    // Security: Exclude auth object from public data
+    const { auth, ...publicData } = data;
+    res.json(publicData);
 });
 
 app.post('/api/menu', (req, res) => {
@@ -107,6 +122,28 @@ app.post('/api/content', (req, res) => {
 app.post('/api/testimonials', (req, res) => {
     const db = readDb();
     db.testimonials = req.body;
+    writeDb(db);
+    res.json({ success: true });
+});
+
+// --- AUTH ROUTES ---
+
+app.post('/api/auth/verify', (req, res) => {
+    const db = readDb();
+    // Default to 'admin123' if auth object is missing
+    const currentPassword = db.auth ? db.auth.password : 'admin123';
+    
+    if (req.body.password === currentPassword) {
+        res.json({ success: true });
+    } else {
+        res.status(401).json({ success: false, message: 'Invalid credentials' });
+    }
+});
+
+app.post('/api/auth/update', (req, res) => {
+    const db = readDb();
+    if (!db.auth) db.auth = {};
+    db.auth.password = req.body.password;
     writeDb(db);
     res.json({ success: true });
 });
