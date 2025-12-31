@@ -14,29 +14,42 @@ export const FALLBACK_MENU: MenuItem[] = [
       id: '1',
       name: 'Chicken Adobo',
       description: 'The national dish. Chicken marinated in vinegar, soy sauce, garlic, and peppercorns, braised to savory perfection.',
-      price: 13.99,
+      prices: { small: 10.99, large: 15.99 },
       category: 'Main',
-      image: 'https://images.unsplash.com/photo-1582878826629-29b7ad1cdc43?auto=format&fit=crop&q=80&w=800'
+      image: 'https://images.unsplash.com/photo-1582878826629-29b7ad1cdc43?auto=format&fit=crop&q=80&w=800',
+      visible: true,
+      isDailySpecial: true
     },
     {
       id: '2',
       name: 'Lumpia Shanghai',
       description: 'Crispy fried spring rolls filled with savory ground pork, carrots, and onions. Served with sweet chili sauce.',
-      price: 8.50,
+      prices: { small: 8.50, large: 14.50 },
       category: 'Appetizer',
-      image: 'https://images.unsplash.com/photo-1626804475297-411dbe63c4df?auto=format&fit=crop&q=80&w=800'
+      image: 'https://images.unsplash.com/photo-1626804475297-411dbe63c4df?auto=format&fit=crop&q=80&w=800',
+      visible: true,
+      isDailySpecial: false
     },
     {
       id: '3',
       name: 'Sinigang na Baboy',
       description: 'A comforting sour tamarind soup with tender pork belly, kangkong (water spinach), and vegetables.',
-      price: 15.50,
+      prices: { small: 12.50, large: 18.50 },
       category: 'Main',
-      image: 'https://images.unsplash.com/photo-1604579963283-f661759695d6?auto=format&fit=crop&q=80&w=800'
+      image: 'https://images.unsplash.com/photo-1604579963283-f661759695d6?auto=format&fit=crop&q=80&w=800',
+      visible: true,
+      isDailySpecial: false
     }
 ];
 
 export const FALLBACK_CONTENT: SiteContent = {
+  hero: {
+    images: [
+      { id: 'h1', url: "https://images.unsplash.com/photo-1518509562904-e7ef99cdcc86?auto=format&fit=crop&q=80&w=1920", visible: true },
+      { id: 'h2', url: "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?auto=format&fit=crop&q=80&w=1920", visible: true },
+      { id: 'h3', url: "https://images.unsplash.com/photo-1534944923498-84e45eb3dbf4?auto=format&fit=crop&q=80&w=1920", visible: true }
+    ]
+  },
   about: {
       title: "Our Heritage",
       subtitle: "Authentic Filipino flavors served with a smile.",

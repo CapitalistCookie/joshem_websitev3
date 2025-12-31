@@ -27,12 +27,21 @@ const INITIAL_DATA = {
       id: '1',
       name: 'Chicken Adobo',
       description: 'The national dish. Chicken marinated in vinegar, soy sauce, garlic, and peppercorns, braised to savory perfection.',
-      price: 13.99,
+      prices: { small: 10.99, large: 15.99 },
       category: 'Main',
-      image: 'https://images.unsplash.com/photo-1582878826629-29b7ad1cdc43?auto=format&fit=crop&q=80&w=800'
+      image: 'https://images.unsplash.com/photo-1582878826629-29b7ad1cdc43?auto=format&fit=crop&q=80&w=800',
+      visible: true,
+      isDailySpecial: true
     }
   ],
   content: {
+    hero: {
+      images: [
+        { id: 'h1', url: "https://images.unsplash.com/photo-1518509562904-e7ef99cdcc86?auto=format&fit=crop&q=80&w=1920", visible: true },
+        { id: 'h2', url: "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?auto=format&fit=crop&q=80&w=1920", visible: true },
+        { id: 'h3', url: "https://images.unsplash.com/photo-1534944923498-84e45eb3dbf4?auto=format&fit=crop&q=80&w=1920", visible: true }
+      ]
+    },
     about: {
       title: "Our Heritage",
       subtitle: "Authentic Filipino flavors served with a smile.",
