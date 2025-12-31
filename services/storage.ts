@@ -1,10 +1,11 @@
-import { MenuItem, SiteContent, Testimonial } from '../types';
+import { MenuItem, SiteContent, Testimonial, Order } from '../types';
 
 // --- STORAGE KEYS ---
 const KEYS = {
   MENU: 'joshem_menu_data_v2',
   CONTENT: 'joshem_site_content_v2',
   TESTIMONIALS: 'joshem_testimonials_v2',
+  ORDERS: 'joshem_orders_v2',
   AUTH_PASS: 'joshem_auth_pass_v2'
 };
 
@@ -76,10 +77,7 @@ export const FALLBACK_CONTENT: SiteContent = {
 
 export const FALLBACK_TESTIMONIALS: Testimonial[] = [
     { id: 1, name: "Maria Santos", rating: 5, text: "Absolutely the best Filipino food I've had outside of Manila. The Adobo tastes just like home!" },
-    { id: 2, name: "Ricardo Batungbakal", rating: 5, text: "The Lumpia Shanghai is incredibly crispy! I ordered 50 pieces for my son's birthday and they were gone in minutes. Highly recommend JoShem for any party catering." },
-    { id: 3, name: "Jocelyn Dimagiba", rating: 4, text: "The Kare-Kare sauce is thick and savory, just the way it should be. The bagoong on the side was the perfect compliment. A bit of a wait for delivery, but worth it." },
-    { id: 4, name: "Renato de Guzman", rating: 5, text: "I've tried many Filipino restaurants in the city, but JoShem captures the 'Puso' of our cooking. Their Sinigang is sour enough to make you blink—exactly how I like it!" },
-    { id: 5, name: "Maria Elena Soriano", rating: 5, text: "We hired JoShem for our company's cultural day. The presentation was beautiful and the Lechon Kawali was still crunchy when it arrived. Five stars for service!" }
+    { id: 2, name: "Ricardo Batungbakal", rating: 5, text: "The Lumpia Shanghai is incredibly crispy! I ordered 50 pieces for my son's birthday and they were gone in minutes. Highly recommend JoShem for any party catering." }
 ];
 
 // Helper to get from LocalStorage
@@ -101,7 +99,7 @@ const setLocal = (key: string, data: any) => {
 };
 
 // Guaranteed Timeout wrapper using Promise.race
-const fetchWithTimeout = async (url: string, options: RequestInit = {}, ms = 1500) => {
+const fetchWithTimeout = async (url: string, options: RequestInit = {}, ms = 2000) => {
   const controller = new AbortController();
   const id = setTimeout(() => controller.abort(), ms);
 
@@ -138,14 +136,23 @@ const getFromHybrid = async <T>(apiPath: string, localKey: string, fallback: T, 
     if (res.ok) {
       const data = await res.json();
       const result = wrapper ? data[wrapper] : data;
-      if (result) {
+      
+      // If the server has valid non-empty data, prioritize it and sync cache
+      if (result && (!Array.isArray(result) || result.length > 0)) {
         setLocal(localKey, result);
         return result;
+      }
+      
+      // If the server returns empty, but we have cache, use the cache (user data)
+      if (cached && (!Array.isArray(cached) || (cached as any).length > 0)) {
+        return cached;
       }
     }
   } catch (e) {
     console.info(`Sync ignored for ${apiPath} (Offline). Using Cache.`);
   }
+  
+  // Return cache if exists, otherwise the rich hardcoded fallbacks
   return cached || fallback;
 };
 
@@ -172,37 +179,31 @@ export const saveSiteContent = (content: SiteContent) => saveToHybrid('/content'
 export const getTestimonials = () => getFromHybrid<Testimonial[]>('/data', KEYS.TESTIMONIALS, FALLBACK_TESTIMONIALS, 'testimonials');
 export const saveTestimonials = (items: Testimonial[]) => saveToHybrid('/testimonials', KEYS.TESTIMONIALS, items);
 
+export const getOrders = () => getFromHybrid<Order[]>('/data', KEYS.ORDERS, [], 'orders');
+export const saveOrders = (items: Order[]) => saveToHybrid('/orders', KEYS.ORDERS, items);
+
 // --- AUTH API ---
 export const verifyPassword = async (password: string): Promise<boolean> => {
   try {
-    // Try server verification first
     const res = await fetchWithTimeout('/api/auth/verify', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ password })
     });
-    
     if (res.ok) {
-      // If server accepts it, cache it locally for offline use
       setLocal(KEYS.AUTH_PASS, password);
       return true;
     }
     return false;
   } catch (e) {
-    // If server is unreachable, check local cache
     const cached = getLocal<string>(KEYS.AUTH_PASS);
-    // If no cache exists, check default 'admin123' (safe fallback for initial offline setup)
-    const isValid = cached ? cached === password : password === 'admin123';
-    return isValid;
+    return cached ? cached === password : password === 'admin123';
   }
 };
 
 export const updatePassword = async (password: string): Promise<boolean> => {
-  // Always update local cache first
   setLocal(KEYS.AUTH_PASS, password);
-  
   try {
-    // Try to update server
     const res = await fetchWithTimeout('/api/auth/update', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -210,8 +211,6 @@ export const updatePassword = async (password: string): Promise<boolean> => {
     });
     return res.ok;
   } catch (e) {
-    // Return true because we successfully updated locally (Optimistic UI)
-    // Server will eventually get updated or user will update again later
     return false; 
   }
 };

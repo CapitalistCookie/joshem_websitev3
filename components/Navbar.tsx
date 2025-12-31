@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import Logo from './Logo';
 
 const Navbar: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -18,8 +19,7 @@ const Navbar: React.FC = () => {
   const scrollToSection = (id: string) => {
     setIsOpen(false);
     if (location.pathname !== '/') {
-      // If we are on admin page, go home first
-      window.location.href = `/#${id}`;
+      navigate(`/#${id}`);
     } else {
       const element = document.getElementById(id);
       if (element) {
@@ -33,7 +33,6 @@ const Navbar: React.FC = () => {
   }`;
 
   const textClass = scrolled ? 'text-gray-800' : 'text-white shadow-black drop-shadow-md';
-  // Logo keeps its own colors, but we might want to scale it
   
   return (
     <nav className={navClass}>
@@ -44,7 +43,6 @@ const Navbar: React.FC = () => {
             className="cursor-pointer flex items-center gap-2"
         >
             <Logo className="h-16 w-16 md:h-20 md:w-20 drop-shadow-lg" />
-            {/* Optional: Hide text if logo is self-contained, or keep for SEO/Accessibility but hidden visually if logo has text */}
             <span className="sr-only">JoShem Foods</span> 
         </div>
 
@@ -59,12 +57,12 @@ const Navbar: React.FC = () => {
               {item}
             </button>
           ))}
-          <button
-             onClick={() => scrollToSection('contact')}
+          <Link
+             to="/order"
              className="bg-[#36B1E5] text-white px-6 py-2 rounded-full font-bold hover:bg-black transition-colors shadow-lg"
           >
             Order Now
-          </button>
+          </Link>
         </div>
 
         {/* Mobile Menu Button */}
@@ -94,13 +92,14 @@ const Navbar: React.FC = () => {
                   {item}
                 </button>
               ))}
-             <button
-                onClick={() => scrollToSection('contact')}
+             <Link
+                to="/order"
+                onClick={() => setIsOpen(false)}
                 className="bg-[#36B1E5] text-white px-8 py-3 rounded-full font-bold"
              >
                 Order Now
-             </button>
-             <Link to="/admin" className="text-gray-400 text-sm mt-4">Site Config</Link>
+             </Link>
+             <Link to="/admin" onClick={() => setIsOpen(false)} className="text-gray-400 text-sm mt-4">Site Config</Link>
           </div>
         </div>
       )}

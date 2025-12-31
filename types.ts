@@ -18,6 +18,30 @@ export interface MenuItem {
   isDailySpecial: boolean;
 }
 
+export interface OrderItem {
+  itemId: string;
+  name: string;
+  size: 'small' | 'large';
+  quantity: number;
+  price: number;
+}
+
+export type OrderStatus = 'pending' | 'confirmed' | 'ready' | 'completed' | 'cancelled';
+
+export interface Order {
+  id: string;
+  customerName: string;
+  email: string;
+  phone: string;
+  pickupTime: string;
+  allergens: string;
+  comments: string;
+  items: OrderItem[];
+  total: number;
+  status: OrderStatus;
+  createdAt: string;
+}
+
 export interface SiteContent {
   hero: {
     images: HeroImage[];
