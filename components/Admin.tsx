@@ -351,7 +351,7 @@ const Admin: React.FC = () => {
                 <p className="text-sm text-gray-500">{items.length} items total</p>
               </div>
 
-              {/* Edit/Add Form with restored Image Upload and URL functionality */}
+              {/* Edit/Add Form */}
               <form onSubmit={(e) => {
                 e.preventDefault();
                 if (!newItem.name) return;
@@ -372,7 +372,7 @@ const Admin: React.FC = () => {
                 </div>
                 <div className="flex flex-col gap-1"><label className="text-[10px] font-bold text-gray-400 uppercase">Description</label><textarea className="border p-2 rounded-lg text-sm outline-none" rows={2} value={newItem.description || ''} onChange={e => setNewItem({...newItem, description: e.target.value})} /></div>
                 
-                {/* RESTORED: Image URL and Upload Controls */}
+                {/* Image URL and Upload Controls */}
                 <div className="flex flex-col gap-1">
                     <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Item Image</label>
                     <div className="flex gap-4 items-start">
@@ -450,29 +450,8 @@ const Admin: React.FC = () => {
                     </div>
                     
                     <div className="flex gap-1">
-                        <button 
-                          onClick={() => updateItemPartial(item.id, { isDailySpecial: !item.isDailySpecial })}
-                          title="Toggle Daily Special"
-                          className={`p-2 rounded-lg transition-colors ${item.isDailySpecial ? 'text-yellow-500 bg-yellow-50' : 'text-gray-300 hover:text-yellow-500'}`}
-                        >
-                          <svg className="w-4 h-4" fill={item.isDailySpecial ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l2.07 6.323a1 1 0 00.95.69h6.69c.969 0 1.371 1.24.588 1.81l-5.414 3.934a1 1 0 00-.364 1.118l2.07 6.323c.3.921-.755 1.688-1.54 1.118l-5.414-3.934a1 1 0 00-1.175 0l-5.414 3.934c-.784.57-1.838-.197-1.539-1.118l2.07-6.323a1 1 0 00-.364-1.118L2.244 11.75c-.783-.57-.38-1.81.588-1.81h6.69a1 1 0 00.95-.69l2.07-6.323z" /></svg>
-                        </button>
-                        
-                        <button 
-                          onClick={() => updateItemPartial(item.id, { visible: !item.visible })}
-                          title="Toggle Visibility"
-                          className={`p-2 rounded-lg transition-colors ${item.visible ? 'text-blue-500 bg-blue-50' : 'text-gray-300 hover:text-blue-500'}`}
-                        >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            {item.visible ? (
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                            ) : (
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.076m1.902-3.27A9.956 9.956 0 0112 5c4.478 0 8.268 2.943 9.542 7a10.059 10.059 0 01-4.293 5.774M6.228 6.228L17.772 17.772" />
-                            )}
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                          </svg>
-                        </button>
-
+                        <button onClick={() => updateItemPartial(item.id, { isDailySpecial: !item.isDailySpecial })} className={`p-2 rounded-lg transition-colors ${item.isDailySpecial ? 'text-yellow-500 bg-yellow-50' : 'text-gray-300 hover:text-yellow-500'}`}><svg className="w-4 h-4" fill={item.isDailySpecial ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l2.07 6.323a1 1 0 00.95.69h6.69c.969 0 1.371 1.24.588 1.81l-5.414 3.934a1 1 0 00-.364 1.118l2.07 6.323c.3.921-.755 1.688-1.54 1.118l-5.414-3.934a1 1 0 00-1.175 0l-5.414 3.934c-.784.57-1.838-.197-1.539-1.118l2.07-6.323a1 1 0 00-.364-1.118L2.244 11.75c-.783-.57-.38-1.81.588-1.81h6.69a1 1 0 00.95-.69l2.07-6.323z" /></svg></button>
+                        <button onClick={() => updateItemPartial(item.id, { visible: !item.visible })} className={`p-2 rounded-lg transition-colors ${item.visible ? 'text-blue-500 bg-blue-50' : 'text-gray-300 hover:text-blue-500'}`}><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">{item.visible ? (<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />) : (<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.076m1.902-3.27A9.956 9.956 0 0112 5c4.478 0 8.268 2.943 9.542 7a10.059 10.059 0 01-4.293 5.774M6.228 6.228L17.772 17.772" />)}<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg></button>
                         <button onClick={() => { setEditingItem(item); setNewItem(item); }} className="p-2 text-gray-400 hover:text-yellow-500 transition-colors"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg></button>
                         <button onClick={() => deleteItem(item.id)} className="p-2 text-gray-400 hover:text-red-500 transition-colors"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7" /></svg></button>
                     </div>
@@ -486,8 +465,9 @@ const Admin: React.FC = () => {
             <div className="space-y-8 animate-fade-in-up">
               <div className="flex justify-between items-center"><h2 className="text-3xl font-bold">Site Configuration</h2><button onClick={() => triggerSave(() => saveSiteContent(siteContent))} className="bg-[#36B1E5] text-white px-8 py-2 rounded-xl font-bold hover:bg-black transition-colors shadow-lg">Save All Changes</button></div>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                {/* Hero Images */}
                 <div className="bg-white p-6 rounded-2xl border shadow-sm border-l-4 border-l-[#36B1E5]">
-                  <h3 className="font-bold text-gray-900 mb-4 uppercase text-xs tracking-widest flex items-center gap-2"><svg className="w-4 h-4 text-[#36B1E5]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>Hero Images</h3>
+                  <h3 className="font-bold text-gray-900 mb-4 uppercase text-xs tracking-widest flex items-center gap-2">Hero Images</h3>
                   <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 no-scrollbar">
                     {siteContent.hero.images.map((img, idx) => (
                       <div key={img.id} className="p-3 border rounded-xl bg-gray-50 flex gap-4 items-center"><div className="w-16 h-16 rounded overflow-hidden flex-shrink-0 bg-gray-200"><img src={img.url} className="w-full h-full object-cover" alt="" /></div><div className="flex-1 space-y-2"><input className="w-full text-[10px] p-2 border rounded-lg outline-none" value={img.url} placeholder="Image URL" onChange={e => { const news = [...siteContent.hero.images]; news[idx].url = e.target.value; setSiteContent({...siteContent, hero: { images: news }}); }} /><label className="flex items-center gap-2 text-[10px] font-bold text-gray-500 cursor-pointer"><input type="checkbox" checked={img.visible} onChange={e => { const news = [...siteContent.hero.images]; news[idx].visible = e.target.checked; setSiteContent({...siteContent, hero: { images: news }}); }} />Visible</label></div><button onClick={() => { const news = siteContent.hero.images.filter(i => i.id !== img.id); setSiteContent({...siteContent, hero: { images: news }}); }} className="text-gray-300 hover:text-red-500 p-2"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7" /></svg></button></div>
@@ -495,12 +475,44 @@ const Admin: React.FC = () => {
                     <button onClick={() => setSiteContent({ ...siteContent, hero: { images: [...siteContent.hero.images, { id: `h-${Date.now()}`, url: '', visible: true }] } })} className="w-full py-3 border-2 border-dashed border-gray-200 rounded-xl text-gray-400 font-bold text-xs hover:bg-gray-50">+ Add Slide</button>
                   </div>
                 </div>
+
+                {/* About Story */}
                 <div className="bg-white p-6 rounded-2xl border shadow-sm border-l-4 border-l-orange-400">
                    <h3 className="font-bold text-gray-900 mb-4 uppercase text-xs tracking-widest">About Story</h3>
                    <div className="space-y-4">
                       <div className="flex flex-col gap-1"><label className="text-[10px] font-bold text-gray-400 uppercase">Main Heading</label><input className="border p-2.5 rounded-xl text-sm outline-none" value={siteContent.about.storyTitle} onChange={e => setSiteContent({...siteContent, about: {...siteContent.about, storyTitle: e.target.value}})} /></div>
                       <div className="flex flex-col gap-1"><label className="text-[10px] font-bold text-gray-400 uppercase">Story Text</label><textarea rows={4} className="border p-2.5 rounded-xl text-sm outline-none" value={siteContent.about.storyText} onChange={e => setSiteContent({...siteContent, about: {...siteContent.about, storyText: e.target.value}})} /></div>
                       <div className="flex flex-col gap-1"><label className="text-[10px] font-bold text-gray-400 uppercase">Image URL</label><input className="border p-2.5 rounded-xl text-sm outline-none" value={siteContent.about.storyImage} onChange={e => setSiteContent({...siteContent, about: {...siteContent.about, storyImage: e.target.value}})} /></div>
+                   </div>
+                </div>
+
+                {/* RESTORED: Contact Information */}
+                <div className="bg-white p-6 rounded-2xl border shadow-sm border-l-4 border-l-blue-400">
+                   <h3 className="font-bold text-gray-900 mb-4 uppercase text-xs tracking-widest">Contact Information</h3>
+                   <div className="space-y-4">
+                      <div className="flex flex-col gap-1"><label className="text-[10px] font-bold text-gray-400 uppercase">Physical Address</label><input className="border p-2.5 rounded-xl text-sm outline-none" value={siteContent.contact.address} onChange={e => setSiteContent({...siteContent, contact: {...siteContent.contact, address: e.target.value}})} /></div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="flex flex-col gap-1"><label className="text-[10px] font-bold text-gray-400 uppercase">Phone</label><input className="border p-2.5 rounded-xl text-sm outline-none" value={siteContent.contact.phone} onChange={e => setSiteContent({...siteContent, contact: {...siteContent.contact, phone: e.target.value}})} /></div>
+                        <div className="flex flex-col gap-1"><label className="text-[10px] font-bold text-gray-400 uppercase">Email</label><input className="border p-2.5 rounded-xl text-sm outline-none" value={siteContent.contact.email} onChange={e => setSiteContent({...siteContent, contact: {...siteContent.contact, email: e.target.value}})} /></div>
+                      </div>
+                      <div className="pt-2 border-t mt-4">
+                        <p className="text-[10px] font-black text-gray-400 uppercase mb-2">Opening Hours</p>
+                        <div className="space-y-2">
+                           <div className="flex flex-col gap-1"><label className="text-[9px] font-bold text-gray-400 uppercase">Mon-Fri</label><input className="border p-2 rounded-lg text-xs outline-none" value={siteContent.contact.hours.monFri} onChange={e => setSiteContent({...siteContent, contact: {...siteContent.contact, hours: {...siteContent.contact.hours, monFri: e.target.value}}})} /></div>
+                           <div className="flex flex-col gap-1"><label className="text-[9px] font-bold text-gray-400 uppercase">Saturday</label><input className="border p-2 rounded-lg text-xs outline-none" value={siteContent.contact.hours.sat} onChange={e => setSiteContent({...siteContent, contact: {...siteContent.contact, hours: {...siteContent.contact.hours, sat: e.target.value}}})} /></div>
+                           <div className="flex flex-col gap-1"><label className="text-[9px] font-bold text-gray-400 uppercase">Sunday</label><input className="border p-2 rounded-lg text-xs outline-none" value={siteContent.contact.hours.sun} onChange={e => setSiteContent({...siteContent, contact: {...siteContent.contact, hours: {...siteContent.contact.hours, sun: e.target.value}}})} /></div>
+                        </div>
+                      </div>
+                   </div>
+                </div>
+
+                {/* RESTORED: Social Media Links */}
+                <div className="bg-white p-6 rounded-2xl border shadow-sm border-l-4 border-l-green-400">
+                   <h3 className="font-bold text-gray-900 mb-4 uppercase text-xs tracking-widest">Social Media Links</h3>
+                   <div className="space-y-4">
+                      <div className="flex flex-col gap-1"><label className="text-[10px] font-bold text-gray-400 uppercase">Facebook URL</label><input className="border p-2.5 rounded-xl text-sm outline-none" placeholder="https://..." value={siteContent.socials.facebook} onChange={e => setSiteContent({...siteContent, socials: {...siteContent.socials, facebook: e.target.value}})} /></div>
+                      <div className="flex flex-col gap-1"><label className="text-[10px] font-bold text-gray-400 uppercase">Instagram URL</label><input className="border p-2.5 rounded-xl text-sm outline-none" placeholder="https://..." value={siteContent.socials.instagram} onChange={e => setSiteContent({...siteContent, socials: {...siteContent.socials, instagram: e.target.value}})} /></div>
+                      <div className="flex flex-col gap-1"><label className="text-[10px] font-bold text-gray-400 uppercase">Twitter URL</label><input className="border p-2.5 rounded-xl text-sm outline-none" placeholder="https://..." value={siteContent.socials.twitter} onChange={e => setSiteContent({...siteContent, socials: {...siteContent.socials, twitter: e.target.value}})} /></div>
                    </div>
                 </div>
               </div>
@@ -536,11 +548,11 @@ const Admin: React.FC = () => {
                 <h2 className="text-3xl font-bold text-gray-900">Configuration & Security</h2>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                   <div className="bg-white p-6 rounded-2xl border shadow-sm border-l-4 border-l-[#36B1E5]">
-                      <h3 className="font-bold text-gray-900 mb-6 flex items-center gap-2"><svg className="w-5 h-5 text-[#36B1E5]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>Order Preparation Settings</h3>
+                      <h3 className="font-bold text-gray-900 mb-6 flex items-center gap-2">Order Preparation Settings</h3>
                       <div className="flex flex-col gap-1"><label className="text-[10px] font-bold text-gray-400 uppercase">Min Preparation Time (Hours)</label><div className="flex gap-4 items-center"><input type="number" min="0" className="w-full border p-3 rounded-xl outline-none focus:ring-2 focus:ring-blue-100 font-bold" value={siteContent.settings?.minPrepTime || 0} onChange={e => setSiteContent({ ...siteContent, settings: { ...siteContent.settings, minPrepTime: parseInt(e.target.value) || 0 }})} /><button onClick={() => triggerSave(() => saveSiteContent(siteContent))} className="bg-[#36B1E5] text-white px-6 py-3 rounded-xl font-bold hover:bg-black transition-colors">Apply</button></div><p className="text-[10px] text-gray-400 mt-2">Lead time for customer pickups.</p></div>
                   </div>
                   <div className="bg-white p-6 rounded-2xl border shadow-sm">
-                      <h3 className="font-bold text-gray-900 mb-6 flex items-center gap-2"><svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>Admin Security</h3>
+                      <h3 className="font-bold text-gray-900 mb-6 flex items-center gap-2">Admin Security</h3>
                       <form onSubmit={async (e) => { e.preventDefault(); if(!newPass || newPass !== confirmPass) return alert("Mismatch"); const success = await updatePassword(newPass); if(success) { alert("Updated!"); setNewPass(''); setConfirmPass(''); } }} className="space-y-4">
                           <div className="flex flex-col gap-1"><label className="text-[10px] font-bold text-gray-400 uppercase">New Password</label><input type="password" placeholder="••••••••" className="w-full border p-3 rounded-xl outline-none focus:ring-2 focus:ring-blue-100" value={newPass} onChange={e => setNewPass(e.target.value)} /></div>
                           <div className="flex flex-col gap-1"><label className="text-[10px] font-bold text-gray-400 uppercase">Confirm</label><input type="password" placeholder="••••••••" className="w-full border p-3 rounded-xl outline-none focus:ring-2 focus:ring-blue-100" value={confirmPass} onChange={e => setConfirmPass(e.target.value)} /></div>
