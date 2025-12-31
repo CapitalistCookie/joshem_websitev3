@@ -68,6 +68,9 @@ export interface SiteContent {
     instagram: string;
     twitter: string;
   };
+  settings: {
+    minPrepTime: number; // in hours
+  };
 }
 
 export interface Testimonial {

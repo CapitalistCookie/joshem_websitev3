@@ -72,6 +72,9 @@ export const FALLBACK_CONTENT: SiteContent = {
       facebook: "https://facebook.com/joshemfoods",
       instagram: "https://instagram.com/joshemfoods",
       twitter: "https://twitter.com/joshemfoods"
+    },
+    settings: {
+      minPrepTime: 24
     }
   };
 
